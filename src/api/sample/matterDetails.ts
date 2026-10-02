@@ -1,7 +1,7 @@
 // Fabricated matter detail for three sample matters. No real clients,
 // providers, carriers or cases. The summary text is fixed sample copy,
 // not generated.
-import { ago, DAY, HOUR, source } from './helpers';
+import { ago, ahead, DAY, HOUR, source } from './helpers';
 
 const clio = (n: number) => `https://app.clio.com/nc/#/matters/${n}`;
 
@@ -28,7 +28,7 @@ const alvarez = {
   leadAttorney: 'Dana Whitaker',
   sourceUrl: clio(1042),
   caseValue: { expected: 85_000, low: 60_000, high: 110_000, updatedAt: ago(6 * DAY), source: alvarezValuation },
-  coverage: { limit: 100_000, carrier: 'Keystone Auto', verifiedAt: ago(30 * DAY), source: alvarezPolicy },
+  coverage: { limit: 100_000, carrier: 'Keystone Auto', type: 'Auto liability', verifiedAt: ago(30 * DAY), source: alvarezPolicy },
   firmSpend: { amount: 2_140, asOf: ago(1 * DAY), source: alvarezLedger },
   lastContact: { at: ago(6 * HOUR), who: 'Maria, with Jordan Lee', channel: 'Portal message', source: alvarezMessage },
   summaryAsOf: ago(2 * HOUR),
@@ -69,20 +69,48 @@ const alvarez = {
   ],
   providers: [
     {
-      id: 'p-1', name: 'Okafor Spine & Sports', specialty: 'Orthopedics', lienType: 'Medical lien',
-      lastVisitAt: ago(1 * DAY), lastVisitSource: alvarezPlan, openRequests: 0,
-      share: { state: 'opened', openedAt: ago(1 * DAY) },
+      id: 'p-okafor', name: 'Okafor Spine & Sports', specialty: 'Orthopedics', lienType: 'Medical lien',
+      lastVisitAt: ago(1 * DAY), lastVisitSource: alvarezPlan,
     },
     {
-      id: 'p-2', name: 'Bayview Physical Therapy', specialty: 'Physical therapy', lienType: 'Letter of protection',
+      id: 'p-bayview', name: 'Bayview Physical Therapy', specialty: 'Physical therapy', lienType: 'Letter of protection',
       lastVisitAt: ago(2 * DAY), lastVisitSource: source('bill', 'Visit invoice, Bayview PT', ago(2 * DAY), 'Therapeutic exercise and manual therapy, 60 minutes.', { page: 1 }),
-      openRequests: 2, share: { state: 'shared' },
     },
     {
-      id: 'p-3', name: 'Coastal Imaging', specialty: 'Radiology', lienType: 'Medical lien',
-      lastVisitAt: ago(26 * DAY), lastVisitSource: alvarezMri, openRequests: 1,
-      share: { state: 'not_shared' },
+      id: 'p-coastal', name: 'Coastal Imaging', specialty: 'Radiology', lienType: 'Medical lien',
+      lastVisitAt: ago(26 * DAY), lastVisitSource: alvarezMri,
     },
+  ],
+  milestones: [
+    { id: 'ms-1', label: 'Collision', date: ago(42 * DAY), done: true },
+    { id: 'ms-2', label: 'Firm retained', date: ago(41 * DAY), done: true },
+    { id: 'ms-3', label: 'Liability accepted by insurer', date: ago(28 * DAY), done: true },
+    { id: 'ms-4', label: 'Treatment complete', date: ahead(56 * DAY), done: false },
+    { id: 'ms-5', label: 'Demand sent', date: ahead(70 * DAY), done: false },
+  ],
+  visits: [
+    { id: 'v-1', providerId: 'p-okafor', date: ago(38 * DAY), status: 'attended' },
+    { id: 'v-2', providerId: 'p-coastal', date: ago(26 * DAY), status: 'attended' },
+    { id: 'v-3', providerId: 'p-bayview', date: ago(21 * DAY), status: 'attended' },
+    { id: 'v-4', providerId: 'p-bayview', date: ago(14 * DAY), status: 'missed' },
+    { id: 'v-5', providerId: 'p-bayview', date: ago(9 * DAY), status: 'attended' },
+    { id: 'v-6', providerId: 'p-bayview', date: ago(2 * DAY), status: 'attended' },
+    { id: 'v-7', providerId: 'p-okafor', date: ago(1 * DAY), status: 'attended' },
+    { id: 'v-8', providerId: 'p-bayview', date: ahead(2 * DAY), status: 'scheduled' },
+  ],
+  requests: [
+    { id: 'rq-1', providerId: 'p-bayview', title: 'Therapy notes for all visits to date', requestedAt: ago(8 * DAY) },
+    { id: 'rq-2', providerId: 'p-bayview', title: 'Itemized billing ledger', requestedAt: ago(8 * DAY) },
+    { id: 'rq-3', providerId: 'p-coastal', title: 'Radiology report and images for the MRI', requestedAt: ago(7 * DAY) },
+  ],
+  documents: [
+    { id: 'd-1', title: 'Police report', pageCount: 4 },
+    { id: 'd-2', title: 'Cervical and lumbar MRI', pageCount: 3 },
+    { id: 'd-3', title: 'Updated treatment plan', pageCount: 2 },
+  ],
+  providerSummary: [
+    'Maria is in active treatment after a rear-end collision. The other driver was cited at the scene.',
+    'The insurer has accepted liability. The case will move to settlement talks once treatment ends.',
   ],
 };
 
@@ -110,7 +138,7 @@ const whitfield = {
   leadAttorney: 'Marcus Bell',
   sourceUrl: clio(1018),
   caseValue: { expected: 950_000, low: 700_000, high: 1_400_000, updatedAt: ago(14 * DAY), source: whitfieldValuation },
-  coverage: { limit: 2_000_000, carrier: 'Great Plains Commercial', verifiedAt: ago(120 * DAY), source: whitfieldPolicy },
+  coverage: { limit: 2_000_000, carrier: 'Great Plains Commercial', type: 'Commercial auto liability', verifiedAt: ago(120 * DAY), source: whitfieldPolicy },
   firmSpend: { amount: 38_650, asOf: ago(1 * DAY), source: whitfieldLedger },
   lastContact: { at: ago(3 * DAY), who: 'James, with Marcus Bell', channel: 'Phone call', source: whitfieldCall },
   summaryAsOf: ago(3 * HOUR),
@@ -149,20 +177,45 @@ const whitfield = {
   ],
   providers: [
     {
-      id: 'p-1', name: 'Riverside Neurosurgery', specialty: 'Neurosurgery', lienType: 'Medical lien',
+      id: 'p-riverside', name: 'Riverside Neurosurgery', specialty: 'Neurosurgery', lienType: 'Medical lien',
       lastVisitAt: ago(21 * DAY), lastVisitSource: source('medical_record', 'Post-op follow-up', ago(21 * DAY), 'Healing well. Cleared for light duty.', { page: 1 }),
-      openRequests: 0, share: { state: 'opened', openedAt: ago(9 * DAY) },
     },
     {
-      id: 'p-2', name: 'Lakeside Hand Center', specialty: 'Hand surgery', lienType: 'Health insurance',
+      id: 'p-lakeside', name: 'Lakeside Hand Center', specialty: 'Hand surgery', lienType: 'Health insurance',
       lastVisitAt: ago(95 * DAY), lastVisitSource: source('medical_record', 'Discharge from care', ago(95 * DAY), 'Fracture healed. Full range of motion. Discharged.', { page: 1 }),
-      openRequests: 0, share: { state: 'not_shared' },
     },
     {
-      id: 'p-3', name: 'Summit Neuropsychology', specialty: 'Neuropsychology', lienType: 'Letter of protection',
+      id: 'p-summit', name: 'Summit Neuropsychology', specialty: 'Neuropsychology', lienType: 'Letter of protection',
       lastVisitAt: ago(5 * DAY), lastVisitSource: source('bill', 'Intake invoice, Summit', ago(5 * DAY), 'New patient consultation. Testing scheduled.', { page: 1 }),
-      openRequests: 1, share: { state: 'shared' },
     },
+  ],
+  milestones: [
+    { id: 'ms-1', label: 'Collision', date: ago(211 * DAY), done: true },
+    { id: 'ms-2', label: 'Firm retained', date: ago(210 * DAY), done: true },
+    { id: 'ms-3', label: 'Lawsuit filed', date: ago(150 * DAY), done: true },
+    { id: 'ms-4', label: 'Defendant driver deposition', date: ahead(19 * DAY), done: false },
+    { id: 'ms-5', label: 'Mediation', date: ahead(45 * DAY), done: false },
+  ],
+  visits: [
+    { id: 'v-1', providerId: 'p-lakeside', date: ago(200 * DAY), status: 'attended' },
+    { id: 'v-2', providerId: 'p-riverside', date: ago(160 * DAY), status: 'attended' },
+    { id: 'v-3', providerId: 'p-lakeside', date: ago(95 * DAY), status: 'attended' },
+    { id: 'v-4', providerId: 'p-riverside', date: ago(60 * DAY), status: 'missed' },
+    { id: 'v-5', providerId: 'p-riverside', date: ago(21 * DAY), status: 'attended' },
+    { id: 'v-6', providerId: 'p-summit', date: ago(5 * DAY), status: 'attended' },
+    { id: 'v-7', providerId: 'p-summit', date: ahead(9 * DAY), status: 'scheduled' },
+  ],
+  requests: [
+    { id: 'rq-1', providerId: 'p-summit', title: 'Neuropsychological testing report when complete', requestedAt: ago(5 * DAY) },
+  ],
+  documents: [
+    { id: 'd-1', title: 'Operative report', pageCount: 3 },
+    { id: 'd-2', title: 'ER discharge summary', pageCount: 4 },
+    { id: 'd-3', title: 'Notice of deposition', pageCount: 2 },
+  ],
+  providerSummary: [
+    'James was hit by a commercial truck. The case is in litigation and moving through discovery.',
+    'His spine surgery and wrist fracture are documented. Testing for a possible brain injury is underway.',
   ],
 };
 
@@ -188,7 +241,7 @@ const brooks = {
   leadAttorney: 'Dana Whitaker',
   sourceUrl: clio(1037),
   caseValue: { expected: 120_000, low: 80_000, high: 150_000, updatedAt: ago(9 * DAY), source: brooksValuation },
-  coverage: { limit: 50_000, carrier: 'Pacific Mutual', verifiedAt: ago(60 * DAY), source: brooksPolicy },
+  coverage: { limit: 50_000, carrier: 'Pacific Mutual', type: 'General liability', verifiedAt: ago(60 * DAY), source: brooksPolicy },
   firmSpend: { amount: 4_320, asOf: ago(2 * DAY), source: brooksLedger },
   lastContact: { at: ago(9 * DAY), who: 'Devon, with Jordan Lee', channel: 'Phone call', source: brooksCall },
   summaryAsOf: ago(1 * HOUR),
@@ -225,15 +278,37 @@ const brooks = {
   ],
   providers: [
     {
-      id: 'p-1', name: 'Harbor Orthopedics', specialty: 'Orthopedics', lienType: 'Medical lien',
+      id: 'p-harbor', name: 'Harbor Orthopedics', specialty: 'Orthopedics', lienType: 'Medical lien',
       lastVisitAt: ago(18 * DAY), lastVisitSource: source('bill', 'Visit invoice, Harbor Ortho', ago(18 * DAY), 'Follow-up visit, knee injection.', { page: 1 }),
-      openRequests: 1, share: { state: 'opened', openedAt: ago(4 * DAY) },
     },
     {
-      id: 'p-2', name: 'City Urgent Care', specialty: 'Urgent care', lienType: 'Health insurance',
-      lastVisitAt: ago(149 * DAY), lastVisitSource: brooksUrgent, openRequests: 0,
-      share: { state: 'not_shared' },
+      id: 'p-cityuc', name: 'City Urgent Care', specialty: 'Urgent care', lienType: 'Health insurance',
+      lastVisitAt: ago(149 * DAY), lastVisitSource: brooksUrgent,
     },
+  ],
+  milestones: [
+    { id: 'ms-1', label: 'Fall at store', date: ago(151 * DAY), done: true },
+    { id: 'ms-2', label: 'Firm retained', date: ago(150 * DAY), done: true },
+    { id: 'ms-3', label: 'Demand sent', date: ago(34 * DAY), done: true },
+    { id: 'ms-4', label: 'Settlement', date: ahead(30 * DAY), done: false },
+  ],
+  visits: [
+    { id: 'v-1', providerId: 'p-cityuc', date: ago(149 * DAY), status: 'attended' },
+    { id: 'v-2', providerId: 'p-harbor', date: ago(120 * DAY), status: 'attended' },
+    { id: 'v-3', providerId: 'p-harbor', date: ago(75 * DAY), status: 'attended' },
+    { id: 'v-4', providerId: 'p-harbor', date: ago(46 * DAY), status: 'missed' },
+    { id: 'v-5', providerId: 'p-harbor', date: ago(18 * DAY), status: 'attended' },
+  ],
+  requests: [
+    { id: 'rq-1', providerId: 'p-harbor', title: 'Written agreement on the lien reduction', requestedAt: ago(6 * DAY) },
+  ],
+  documents: [
+    { id: 'd-1', title: 'Store incident report', pageCount: 2 },
+    { id: 'd-2', title: 'Right knee MRI', pageCount: 2 },
+  ],
+  providerSummary: [
+    'Devon tore the meniscus in his right knee in a fall at a grocery store.',
+    'The case is in settlement talks with the store’s insurer.',
   ],
 };
 
