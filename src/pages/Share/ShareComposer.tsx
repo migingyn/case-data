@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import Panel from '@/components/Panel/Panel';
 import ProviderCaseView from '@/components/ProviderCaseView/ProviderCaseView';
 import { buildProviderView, formatNameList } from '@/helpers/shares';
+import { useFirm } from '@/hooks/firm';
 import { usePublishShare, useRevokeShare, useSaveShareDraft } from '@/hooks/shares';
 import type { Matter, MatterDetail, Provider } from '@/types/matters';
 import type { ProviderUser, Share, ShareSettings } from '@/types/shares';
@@ -30,7 +31,8 @@ const ShareComposer: FC<ShareComposerProps> = ({ matter, detail, provider, users
 
   const update = (patch: Partial<ShareSettings>) => setSettings((current) => ({ ...current, ...patch }));
   const liveVersion = share?.published?.version ?? null;
-  const preview = buildProviderView(matter, detail, provider, settings);
+  const firmName = useFirm().data?.name ?? 'The firm';
+  const preview = buildProviderView({ firmName, matter, detail, provider, settings, now });
   const recipientNames = formatNameList(
     users.filter((user) => settings.recipientIds.includes(user.id)).map((user) => user.name),
   );
@@ -58,7 +60,13 @@ const ShareComposer: FC<ShareComposerProps> = ({ matter, detail, provider, users
           }
         >
           <div aria-live="polite">
-            <ProviderCaseView view={preview} versionLabel={`Version ${(liveVersion ?? 0) + 1} · preview`} headingLevel={3} />
+            <ProviderCaseView
+              view={preview}
+              version={(liveVersion ?? 0) + 1}
+              updatedAt={new Date(now).toISOString()}
+              now={now}
+              mode="preview"
+            />
           </div>
         </Panel>
       </div>
@@ -79,7 +87,7 @@ const ShareComposer: FC<ShareComposerProps> = ({ matter, detail, provider, users
         }
         onPublish={() =>
           publish.mutate(
-            { providerId: provider.id, settings },
+            { providerId: provider.id, settings, view: preview },
             {
               onSuccess: (saved) =>
                 toast.success(`Notification sent to ${recipientNames}`, {

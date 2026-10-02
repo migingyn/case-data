@@ -21,61 +21,26 @@ export const sampleProviderUsers = [
   { id: 'u-13', providerId: 'p-cityuc', name: 'Lee Adams', role: 'Records clerk' },
 ];
 
-const baseSettings = (recipientIds: string[]) => ({
-  status: true,
-  coverage: true,
-  coverageLevel: 'indicator',
-  milestones: true,
-  treatment: true,
-  requests: true,
-  summary: false,
-  documents: false,
-  documentPages: {},
-  expiresAt: ahead(80 * DAY),
-  recipientIds,
-});
-
-function publishedShare(
-  matterId: string,
-  providerId: string,
-  recipientIds: string[],
-  publishes: number[],
-  opened: { daysAgo: number; by: string } | null,
-) {
-  const version = publishes.length;
-  const settings = baseSettings(recipientIds);
-  const activity = publishes.map((days, i) => ({
-    id: `${matterId}-${providerId}-pub-${i + 1}`,
-    at: ago(days * DAY),
-    event: 'Published',
-    version: i + 1,
-    who: CURRENT_USER_NAME,
-  }));
-  if (opened) {
-    activity.push({
-      id: `${matterId}-${providerId}-open`,
-      at: ago(opened.daysAgo * DAY),
-      event: 'Opened by provider',
-      version,
-      who: opened.by,
-    });
-  }
-  return {
-    matterId,
-    providerId,
-    draft: settings,
-    published: { version, publishedAt: ago(publishes[version - 1] * DAY), settings },
-    revokedAt: null,
-    openedVersion: opened ? version : null,
-    openedAt: opened ? ago(opened.daysAgo * DAY) : null,
-    activity,
-  };
-}
-
-export const sampleShares = [
-  publishedShare('m-1042', 'p-okafor', ['u-1', 'u-2'], [20, 3], { daysAgo: 1, by: 'Rosa Diaz' }),
-  publishedShare('m-1042', 'p-bayview', ['u-3'], [5], null),
-  publishedShare('m-1018', 'p-riverside', ['u-7'], [12], { daysAgo: 9, by: 'Tess Moreno' }),
-  publishedShare('m-1018', 'p-summit', ['u-10'], [4], null),
-  publishedShare('m-1037', 'p-harbor', ['u-11'], [40, 25, 6], { daysAgo: 4, by: 'Marco Ruiz' }),
+/** Shares that exist when the prototype first loads; views are built from the sample matters. */
+export const sampleShareSeeds = [
+  {
+    matterId: 'm-1042', providerId: 'p-okafor', recipientIds: ['u-1', 'u-2'],
+    publishedDaysAgo: [20, 3], opened: { daysAgo: 1, by: 'Rosa Diaz' },
+    // Version 1 didn't include documents; version 2 added them.
+    versionOverrides: [{ documents: false }, { documents: true, documentPages: { 'd-2': [1, 2], 'd-3': [1] } }],
+  },
+  { matterId: 'm-1042', providerId: 'p-bayview', recipientIds: ['u-3'], publishedDaysAgo: [5], opened: null, versionOverrides: [{}] },
+  {
+    matterId: 'm-1018', providerId: 'p-riverside', recipientIds: ['u-7'],
+    publishedDaysAgo: [12], opened: { daysAgo: 9, by: 'Tess Moreno' }, versionOverrides: [{}],
+  },
+  { matterId: 'm-1018', providerId: 'p-summit', recipientIds: ['u-10'], publishedDaysAgo: [4], opened: null, versionOverrides: [{}] },
+  {
+    matterId: 'm-1037', providerId: 'p-harbor', recipientIds: ['u-11'],
+    publishedDaysAgo: [40, 25, 6], opened: { daysAgo: 4, by: 'Marco Ruiz' },
+    versionOverrides: [{}, { summary: true }, { summary: true, documents: true, documentPages: { 'd-2': [1, 2] } }],
+  },
 ];
+
+export const seedExpiresAt = ahead(80 * DAY);
+export const seedPublishedAt = (daysAgo: number) => ago(daysAgo * DAY);

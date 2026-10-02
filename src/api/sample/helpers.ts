@@ -20,3 +20,19 @@ export function source(
 ) {
   return { id: `src-${nextSourceId++}`, kind, title, date, excerpt, ...extra };
 }
+
+/** A sample document page. "[[12]]" in a line marks a 12-character redaction box. */
+export function page(number: number, ...lines: string[]) {
+  return {
+    number,
+    lines: lines.map((line) =>
+      line
+        .split(/(\[\[\d+\]\])/)
+        .filter(Boolean)
+        .map((part) => {
+          const match = /^\[\[(\d+)\]\]$/.exec(part);
+          return match ? { redacted: Number(match[1]) } : part;
+        }),
+    ),
+  };
+}

@@ -5,12 +5,12 @@ import { Outlet } from 'react-router';
 const ProviderShell: FC = () => (
   <div className="min-h-svh bg-background">
     <header className="border-b">
-      <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-6">
+      <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-4 sm:px-6">
         <span className="text-[15px] font-semibold tracking-tight">Case Digest</span>
         <span className="text-sm text-muted-foreground">for providers</span>
       </div>
     </header>
-    <main id="main" className="mx-auto max-w-3xl px-6 pt-8 pb-16">
+    <main id="main" className="mx-auto max-w-3xl px-4 pt-6 pb-16 sm:px-6 sm:pt-8">
       <Outlet />
     </main>
   </div>

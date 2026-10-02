@@ -40,3 +40,14 @@ export type SessionStore<T> = ReturnType<typeof createSessionStore<T>>;
 export function useSessionValue<T>(store: SessionStore<T>): T {
   return useSyncExternalStore(store.subscribe, store.get);
 }
+
+/** True the first time a key is seen in this tab's session, false after. */
+export function firstTimeThisSession(key: string): boolean {
+  try {
+    if (sessionStorage.getItem(key)) return false;
+    sessionStorage.setItem(key, '1');
+    return true;
+  } catch {
+    return true;
+  }
+}
