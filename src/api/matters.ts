@@ -1,7 +1,14 @@
-import { matterDashboardSchema, type MatterDashboard } from '@/types/matters';
+import {
+  matterDashboardSchema,
+  matterDetailSchema,
+  type MatterDashboard,
+  type MatterDetail,
+} from '@/types/matters';
+import { sampleMatterDetails } from './sample/matterDetails';
 import { sampleDashboard } from './sample/matters';
 
 const SIMULATED_LATENCY_MS = 600;
+const DETAIL_LATENCY_MS = 900;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -21,4 +28,14 @@ export async function getMatterDashboard(): Promise<MatterDashboard> {
       activity: matter.activity.filter((item) => Date.parse(item.occurredAt) <= now),
     })),
   };
+}
+
+/**
+ * Header facts, KPIs, the catch-up brief, ranked entries, injuries and
+ * providers for one matter. Null when the sample has no detail for it.
+ */
+export async function getMatterDetail(matterId: string): Promise<MatterDetail | null> {
+  await wait(DETAIL_LATENCY_MS);
+  const detail = sampleMatterDetails.find((item) => item.matterId === matterId);
+  return detail ? matterDetailSchema.parse(detail) : null;
 }

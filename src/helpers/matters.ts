@@ -216,3 +216,42 @@ export function formatDaysAgo(days: number): string {
   if (days === 0) return 'Today';
   return `${dayCount(days)} ago`;
 }
+
+export interface TaskGroups {
+  overdue: Task[];
+  comingUp: Task[];
+  waiting: Task[];
+}
+
+/** Open tasks split for the matter view. Each task lands in one group. */
+export function groupTasks(tasks: Task[], now: number): TaskGroups {
+  const open = tasks
+    .filter((task) => !task.done)
+    .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt));
+  return {
+    overdue: open.filter((task) => isOverdue(task, now)),
+    comingUp: open.filter((task) => !isOverdue(task, now) && !task.waitingOn),
+    waiting: open.filter((task) => !isOverdue(task, now) && task.waitingOn),
+  };
+}
+
+/** "Maria Alvarez" → "MA". */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
+}
+
+const longDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+export const formatLongDate = (iso: string) => longDate.format(new Date(iso));
+
+const timeOfDay = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
+export const formatDateTime = (iso: string) => timeOfDay.format(new Date(iso));
