@@ -140,6 +140,9 @@ const ProviderCaseView: FC<ProviderCaseViewProps> = ({
 
       {milestones && (
         <Section {...section('milestones')} title="Where the case is">
+          {milestones.reached.length === 0 && !milestones.next && (
+            <p className="text-muted-foreground">No milestones recorded yet.</p>
+          )}
           <ol className="flex flex-col gap-1.5">
             {milestones.reached.map((m) => (
               <li key={m.label} className="flex items-baseline gap-2">

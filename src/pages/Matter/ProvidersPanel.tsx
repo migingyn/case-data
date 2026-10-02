@@ -58,17 +58,21 @@ const ProvidersPanel: FC<ProvidersPanelProps> = ({ matterId, providers, requests
                 <p className={cn('shrink-0 text-[13px] font-medium', share.className)}>{share.text}</p>
               </div>
               <p className="text-[13px] text-muted-foreground">
-                {provider.specialty} · {provider.lienType}
+                {provider.specialty} · {provider.lienType ?? 'Lien not recorded'}
               </p>
               <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-muted-foreground">
-                <span>
-                  Last visit{' '}
-                  <time dateTime={provider.lastVisitAt} className="font-mono tabular-nums">
-                    {formatShortDate(provider.lastVisitAt)}
-                  </time>
-                </span>
-                <SourceChip source={provider.lastVisitSource} />
-                <span aria-hidden>·</span>
+                {provider.lastVisitAt && (
+                  <>
+                    <span>
+                      Last visit{' '}
+                      <time dateTime={provider.lastVisitAt} className="font-mono tabular-nums">
+                        {formatShortDate(provider.lastVisitAt)}
+                      </time>
+                    </span>
+                    {provider.lastVisitSource && <SourceChip source={provider.lastVisitSource} />}
+                    <span aria-hidden>·</span>
+                  </>
+                )}
                 <span className={cn(openRequests > 0 && 'text-foreground')}>
                   <span className="font-mono tabular-nums">{openRequests}</span> open{' '}
                   {openRequests === 1 ? 'request' : 'requests'}

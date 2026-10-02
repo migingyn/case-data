@@ -86,9 +86,11 @@ export const providerSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
   specialty: z.string().min(1),
-  lienType: z.string().min(1),
-  lastVisitAt: z.iso.datetime(),
-  lastVisitSource: sourceSchema,
+  /** Null when the lien isn't recorded (Clio has no lien details). */
+  lienType: z.string().min(1).nullable(),
+  /** Null when no visit is on record. */
+  lastVisitAt: z.iso.datetime().nullable(),
+  lastVisitSource: sourceSchema.nullable(),
 });
 export type Provider = z.infer<typeof providerSchema>;
 
