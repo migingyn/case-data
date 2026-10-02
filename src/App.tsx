@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell/AppShell';
 import ProviderShell from '@/components/ProviderShell/ProviderShell';
 import ComingSoonPage from '@/pages/ComingSoon/ComingSoonPage';
 import HomePage from '@/pages/Home/HomePage';
+import IntegrationsPage from '@/pages/Integrations/IntegrationsPage';
 import MatterPage from '@/pages/Matter/MatterPage';
 import ProviderCasePage from '@/pages/ProviderCase/ProviderCasePage';
 import UploadPage from '@/pages/ProviderCase/UploadPage';
@@ -15,6 +16,7 @@ const App: FC = () => (
       <Route path="/" element={<Navigate to="/app" replace />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<HomePage />} />
+        <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="matters/:id" element={<MatterPage />} />
         <Route path="matters/:id/share" element={<SharePage />} />
         <Route path="matters/:id/share/pages" element={<ComingSoonPage title="Document page picker" />} />
