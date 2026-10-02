@@ -12,14 +12,34 @@ export const clioStatusSchema = z.object({
 });
 export type ClioStatus = z.infer<typeof clioStatusSchema>;
 
-export const clioMatterSummarySchema = z.object({
-  id: z.number(),
-  displayNumber: z.string(),
-  description: z.string().nullable(),
-  status: z.string(),
-  clientName: z.string().nullable(),
+export const syncResultSchema = z.object({
+  finishedAt: z.iso.datetime(),
+  /** Rows written per table in this run. */
+  counts: z.object({
+    matters: z.number().int(),
+    clients: z.number().int(),
+    documents: z.number().int(),
+    entries: z.number().int(),
+    tasks: z.number().int(),
+    contacts: z.number().int(),
+    costs: z.number().int(),
+  }),
+  /** Clio records left out, and why. */
+  skipped: z.object({
+    mattersWithoutClient: z.number().int(),
+    tasksWithoutDueDate: z.number().int(),
+  }),
 });
-export type ClioMatterSummary = z.infer<typeof clioMatterSummarySchema>;
+export type SyncResult = z.infer<typeof syncResultSchema>;
+
+export const syncStatusSchema = z.object({
+  running: z.boolean(),
+  /** The last finished sync since the server started, or null. */
+  last: syncResultSchema.nullable(),
+  /** Why the last sync failed, when it did. */
+  error: z.string().nullable(),
+});
+export type SyncStatus = z.infer<typeof syncStatusSchema>;
 
 export const aiStatusSchema = z.object({
   configured: z.boolean(),

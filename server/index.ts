@@ -3,12 +3,14 @@ import { env } from './env.ts';
 import { HttpError } from './errors.ts';
 import { aiRouter } from './routes/ai.ts';
 import { clioRouter } from './routes/clio.ts';
+import { syncRouter } from './routes/sync.ts';
 
 const app = express();
 app.use(express.json());
 
 app.use('/api/clio', clioRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/sync', syncRouter);
 
 // Only HttpError messages reach the client. Everything else is logged by name
 // only: messages and bodies from Clio or OpenAI can carry case data or tokens.

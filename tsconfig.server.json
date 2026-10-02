@@ -6,8 +6,10 @@
     "types": ["node"],
     "skipLibCheck": true,
 
-    /* Run directly by tsx; tsc only typechecks */
-    "module": "nodenext",
+    /* Run directly by tsx; tsc only typechecks. Bundler resolution lets the
+       server import the shared zod contracts in src/types without extensions. */
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
@@ -20,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["server"]
+  "include": ["server", "src/types"]
 }
