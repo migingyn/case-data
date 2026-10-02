@@ -64,10 +64,12 @@ publishable key, and RLS decides what each user sees.
 | Documents | `documents` (kind guessed from the name), `matter_entries` (`document`). File contents aren't downloaded yet |
 | Calendar entries that look like court dates | `documents` (`filing`), `matter_entries` (`court_date`) |
 | Expense entries | `documents` (`ledger`), `costs` |
+| Matter relationships whose role starts with "Treating", "Medical provider" or "Hospital" | `providers` (keyed on `source_key` = `clio:<account id>:<contact id>`, specialty from the role) and `matter_providers` (`lien_type` null: Clio has no lien details) |
 
 - **Every record gets one document and one citation**, so every row it produces can point at its source. `documents.clio_document_id` and `matter_entries.clio_id` hold a synthetic key, `<type>:<clio id>` (`note:`, `comm:`, `task:`, `doc:`, `cal:`, `exp:`).
 - **Re-running is safe.** Rows are upserted on their Clio keys. `client_contacts` and `costs` have no Clio key, so each sync replaces them for the synced matters.
-- **Not synced from Clio:** valuations, policies, injuries, providers, visits, requests and milestones. Clio has no native field for them; those panels show empty states.
+- **Share recipients.** Synced practices have no staff on record, and `provider_users` need an `auth.users` row. Until providers can sign in, `src/api/shares.ts` offers one stand-in recipient per practice, "Records desk" (Practice inbox).
+- **Not synced from Clio:** valuations, policies, injuries, visits, requests and milestones. Clio has no native field for them; those panels show empty states.
 - **Not handled yet:** records deleted in Clio stay in Supabase.
 
 ## Catch-up briefs
