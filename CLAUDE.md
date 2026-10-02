@@ -179,6 +179,47 @@ feature following the file-architecture layering.
 Editing and deleting trips are left for a follow-up.
 ```
 
+## Pull requests
+
+Every PR gets a title and a description; never leave the body empty.
+Reviewers (teammates and the hackathon judges) should understand the PR
+without opening the diff.
+
+- **Title**: same format as a commit summary,
+  `<type>(<scope>): <summary>`. For a single-commit PR, reuse that commit's
+  summary.
+- **Description**: build it from `git log main..HEAD` and
+  `git diff main...HEAD --stat`. Describe every commit on the branch, not just
+  the last one, and name the files each change touches. Keep it concise:
+  bullets, not paragraphs.
+
+Use these sections, dropping any that would be empty:
+
+```markdown
+## Why
+One or two sentences: the problem or goal behind this PR.
+
+## What
+- `path/to/file.ts`: what it now does
+- `src/feature/`: what the folder adds, when listing each file is noise
+(Group bullets by commit or layer when the PR has several commits.)
+
+## Setup
+New env vars, migrations to run, renamed config, or anything a teammate
+must do after pulling. Include run commands if they changed.
+
+## Not in this PR
+Deliberate gaps and follow-ups, so reviewers don't flag them as misses.
+
+## Checked
+What was verified: build, lint, tests, manual checks in the browser.
+```
+
+Create with `gh pr create --title ... --body-file -`. If a PR already exists
+for the branch, update it with `gh pr edit <n>` and refresh the description
+whenever new commits change what it covers. Never paste case data or
+secrets into a PR (see Data handling).
+
 ## Commit attribution
 
 Do not add any Claude or Claude Code attribution to commits or pull requests.
@@ -215,8 +256,11 @@ asking again. Run these steps in order:
      Conventional Commits summary plus a body that leads with why, then what
 5. **Push.** `git push -u origin <branch>`. Never force-push, and never push
    directly to `main`.
-6. **Report.** List the commits made (hash and summary) and the branch
-   pushed.
+6. **Pull request.** If the branch has no PR, open one into `main`
+   following Pull requests above. If it already has one, update its title
+   and description so they cover every commit now on the branch.
+7. **Report.** List the commits made (hash and summary), the branch
+   pushed, and the PR link.
 
 If a commit hook or the push fails, stop, show the error, and fix the cause.
 Don't bypass it with `--no-verify` or `--force`.
