@@ -8,6 +8,7 @@ import {
   listExpenses,
   listMatters,
   listNotes,
+  listRelationships,
   listTasks,
   type ClioMatter,
 } from '../clio/resources.ts';
@@ -20,8 +21,10 @@ import {
   fromExpense,
   fromNote,
   fromTask,
+  providerFromRelationship,
   sourceUrl,
   stageFor,
+  type ClioProvider,
   type SourcedRecord,
 } from './mapClio.ts';
 
@@ -170,6 +173,52 @@ async function upsertSources(
   return citationIds;
 }
 
+/**
+ * Treating providers from matter relationships. providers is shared across
+ * firms, so its key carries the Clio account. Returns the matter links written.
+ */
+async function upsertProviders(
+  db: ServiceClient,
+  firmId: number,
+  accountId: number,
+  matterIds: Map<number, number>,
+  providers: ClioProvider[],
+): Promise<number> {
+  const keyOf = (p: ClioProvider) => `clio:${accountId}:${p.clioContactId}`;
+  // One row per practice even when it treats on several matters.
+  const practices = [...new Map(providers.map((p) => [keyOf(p), p]))];
+  const providerIds = new Map<string, number>();
+  for (const part of chunk(practices)) {
+    const saved = unwrap(
+      await db
+        .from('providers')
+        .upsert(part.map(([key, p]) => ({ source_key: key, name: p.name, specialty: p.specialty })), {
+          onConflict: 'source_key',
+        })
+        .select('id, source_key'),
+      'provider upsert',
+    );
+    for (const row of saved) providerIds.set(row.source_key!, row.id);
+  }
+
+  // Lien details aren't in Clio; an existing lien_type is left as it is.
+  const links = [
+    ...new Map(
+      providers.map((p) => {
+        const link = { firm_id: firmId, matter_id: matterIds.get(p.clioMatterId)!, provider_id: providerIds.get(keyOf(p))! };
+        return [`${link.matter_id}:${link.provider_id}`, link] as const;
+      }),
+    ).values(),
+  ];
+  for (const part of chunk(links)) {
+    check(
+      await db.from('matter_providers').upsert(part, { onConflict: 'matter_id,provider_id', ignoreDuplicates: true }),
+      'matter provider upsert',
+    );
+  }
+  return links.length;
+}
+
 /** Contacts and costs have no Clio key and are fully derived, so they are replaced. */
 async function clearDerived(
   db: ServiceClient,
@@ -195,12 +244,23 @@ async function runSync(): Promise<SyncResult> {
   const documents = await listDocuments();
   const calendarEntries = await listCalendarEntries();
   const expenses = await listExpenses();
+  const relationships = await listRelationships();
 
   // matters.client_id is required, so a matter with no client is skipped.
   const withClient = matters.filter((m) => m.client);
   const clientIds = await upsertClients(db, firmId, withClient);
   const matterIds = await upsertMatters(db, firmId, withClient, clientIds);
   const clientContactOf = new Map(withClient.map((m) => [m.id, m.client!.id]));
+  const providerCount = await upsertProviders(
+    db,
+    firmId,
+    me.account.id,
+    matterIds,
+    relationships.flatMap((rel) => {
+      const provider = rel.matter && matterIds.has(rel.matter.id) ? providerFromRelationship(rel) : null;
+      return provider ? [provider] : [];
+    }),
+  );
 
   // Records for matters outside this sync (closed, or skipped) are ignored.
   const inScope = (ref: { id: number } | null | undefined): ref is { id: number } =>
@@ -277,6 +337,7 @@ async function runSync(): Promise<SyncResult> {
     finishedAt: new Date().toISOString(),
     counts: {
       matters: matterIds.size,
+      providers: providerCount,
       clients: clientIds.size,
       documents: records.length,
       entries: entryRows.length,

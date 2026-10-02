@@ -75,6 +75,7 @@ const ClioCard: FC<ClioCardProps> = ({ justConnected }) => {
 
 const COUNT_LABELS: [keyof SyncResult['counts'], string][] = [
   ['matters', 'Matters'],
+  ['providers', 'Providers'],
   ['entries', 'Record entries'],
   ['tasks', 'Tasks'],
   ['contacts', 'Client contacts'],
