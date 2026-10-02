@@ -130,7 +130,7 @@ export function buildProviderView({ firmName, matter, detail, provider, settings
   return {
     firmName,
     practiceName: provider.name,
-    sharedBy: detail.leadAttorney,
+    sharedBy: detail.leadAttorney ?? firmName,
     clientName: matter.clientName,
     caseType: matter.caseType,
     status: settings.status ? statusOf(matter, detail) : null,

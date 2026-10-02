@@ -49,9 +49,10 @@ export const matterSchema = z.object({
   clientName: z.string().min(1),
   caseType: z.string().min(1),
   stage: matterStageSchema,
-  lastClientContactAt: z.iso.datetime(),
-  /** Estimated case value in whole dollars. */
-  estimatedValue: z.number().int().nonnegative(),
+  /** Null when no client contact is on record. */
+  lastClientContactAt: z.iso.datetime().nullable(),
+  /** Estimated case value in whole dollars; null when there is no valuation. */
+  estimatedValue: z.number().int().nonnegative().nullable(),
   /** Liability policy limit in whole dollars; null when not yet confirmed. */
   coverageLimit: z.number().int().nonnegative().nullable(),
   activity: z.array(activitySchema),
@@ -138,16 +139,20 @@ export const matterDetailSchema = z.object({
   matterId: z.string(),
   photoUrl: z.url().nullable(),
   openedAt: z.iso.datetime(),
-  openedSource: sourceSchema,
-  leadAttorney: z.string().min(1),
+  /** The record the opening date comes from, when there is one. */
+  openedSource: sourceSchema.nullable(),
+  leadAttorney: z.string().min(1).nullable(),
   sourceUrl: z.url(),
-  caseValue: z.object({
-    expected: z.number().int().nonnegative(),
-    low: z.number().int().nonnegative(),
-    high: z.number().int().nonnegative(),
-    updatedAt: z.iso.datetime(),
-    source: sourceSchema,
-  }),
+  /** Null until a valuation is on file. */
+  caseValue: z
+    .object({
+      expected: z.number().int().nonnegative(),
+      low: z.number().int().nonnegative(),
+      high: z.number().int().nonnegative(),
+      updatedAt: z.iso.datetime(),
+      source: sourceSchema,
+    })
+    .nullable(),
   coverage: z
     .object({
       limit: z.number().int().nonnegative(),
@@ -158,18 +163,25 @@ export const matterDetailSchema = z.object({
       source: sourceSchema,
     })
     .nullable(),
-  firmSpend: z.object({
-    amount: z.number().int().nonnegative(),
-    asOf: z.iso.datetime(),
-    source: sourceSchema,
-  }),
-  lastContact: z.object({
-    at: z.iso.datetime(),
-    who: z.string().min(1),
-    channel: z.string().min(1),
-    source: sourceSchema,
-  }),
-  summaryAsOf: z.iso.datetime(),
+  /** Null when no costs are recorded. */
+  firmSpend: z
+    .object({
+      amount: z.number().int().nonnegative(),
+      asOf: z.iso.datetime(),
+      source: sourceSchema,
+    })
+    .nullable(),
+  /** Null when no client contact is on record. */
+  lastContact: z
+    .object({
+      at: z.iso.datetime(),
+      who: z.string().min(1),
+      channel: z.string().min(1),
+      source: sourceSchema,
+    })
+    .nullable(),
+  /** When the catch-up brief was generated; null until it has been. */
+  summaryAsOf: z.iso.datetime().nullable(),
   brief: z.object({
     whereItStands: z.array(sourcedSentenceSchema),
     whatIsNext: z.array(sourcedSentenceSchema),

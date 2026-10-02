@@ -40,6 +40,10 @@ const RankedEntries: FC<RankedEntriesProps> = ({ matterId, detail }) => (
           </div>
         ))}
       </div>
+    ) : detail.rankedEntries.length === 0 ? (
+      <p className="text-sm text-muted-foreground">
+        The most important entries are picked when the summary is generated.
+      </p>
     ) : (
       <ol className="-my-2 flex flex-col divide-y">
         {detail.rankedEntries.slice(0, 10).map((entry, index) => (

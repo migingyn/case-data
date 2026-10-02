@@ -136,7 +136,16 @@ const HomePage: FC = () => {
                 onSort={(key) => setSort((current) => nextSort(current, key))}
                 empty={
                   hasNoMatters ? (
-                    <p className="font-medium">No matters yet</p>
+                    <>
+                      <p className="font-medium">No matters yet</p>
+                      <p className="mt-1 text-muted-foreground">
+                        Matters appear here once your Clio account is{' '}
+                        <Link to="/app/integrations" className="text-foreground underline underline-offset-4">
+                          connected and synced
+                        </Link>
+                        .
+                      </p>
+                    </>
                   ) : (
                     <>
                       <p className="font-medium">No matters match</p>

@@ -9,7 +9,7 @@ import type { Matter, MatterDetail } from '@/types/matters';
 
 interface MatterHeaderProps {
   matter: Matter;
-  /** undefined while loading, null when the sample has no detail. */
+  /** undefined while loading, null when the matter has no detail. */
   detail: MatterDetail | null | undefined;
 }
 
@@ -37,13 +37,13 @@ const MatterHeader: FC<MatterHeaderProps> = ({ matter, detail }) => (
             <>
               <span className="inline-flex items-center gap-1.5">
                 Opened <time dateTime={detail.openedAt}>{formatLongDate(detail.openedAt)}</time>
-                <SourceChip source={detail.openedSource} />
+                {detail.openedSource && <SourceChip source={detail.openedSource} />}
               </span>
               <span aria-hidden>·</span>
             </>
           ) : null}
           <span>{matter.stage}</span>
-          {detail && (
+          {detail?.leadAttorney && (
             <>
               <span aria-hidden>·</span>
               <span>Lead attorney {detail.leadAttorney}</span>
