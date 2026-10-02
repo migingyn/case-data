@@ -1,11 +1,31 @@
 import { matterDetailSchema, type MatterDetail } from '../../src/types/matters';
+import { briefFailure, briefStatus } from '../briefs/briefs.ts';
 import { unwrap, unwrapMaybe, type ServiceClient } from '../supabase.ts';
 import { iso, loadSources, sourceOf } from './shared.ts';
 
+/** The latest cached brief's sentences and ranked entries; never calls the model. */
+async function readBrief(db: ServiceClient, firmId: number, summaryId: number) {
+  const [sentences, ranked] = await Promise.all([
+    db
+      .from('summary_sentences')
+      .select('block, position, text, citation_id')
+      .eq('firm_id', firmId)
+      .eq('summary_id', summaryId)
+      .order('position'),
+    db
+      .from('summary_ranked_entries')
+      .select('rank, title, reason, entry:matter_entries(id, occurred_at, citation_id)')
+      .eq('firm_id', firmId)
+      .eq('summary_id', summaryId)
+      .order('rank'),
+  ]);
+  return { sentences: unwrap(sentences, 'sentence read'), ranked: unwrap(ranked, 'ranked entry read') };
+}
+
 /**
- * Header facts, KPIs and side panels for one matter, or null if the firm has
- * no such matter. The brief, ranked entries, injuries and provider data stay
- * empty until the AI summary and provider records exist.
+ * Header facts, KPIs, the cached brief and side panels for one matter, or
+ * null if the firm has no such matter. Injuries and provider data stay empty
+ * until there's a source for them.
  */
 export async function readMatterDetail(
   db: ServiceClient,
@@ -62,7 +82,7 @@ export async function readMatterDetail(
       .eq('matter_id', matterId),
     db
       .from('matter_summaries')
-      .select('generated_at')
+      .select('id, generated_at')
       .eq('firm_id', firmId)
       .eq('matter_id', matterId)
       .order('generated_at', { ascending: false })
@@ -77,12 +97,21 @@ export async function readMatterDetail(
   const summaryRow = unwrapMaybe(summary, 'summary read');
   if (entryCount.error) throw new Error(`Supabase entry count failed: ${entryCount.error.message}`);
 
+  const brief = summaryRow ? await readBrief(db, firmId, summaryRow.id) : { sentences: [], ranked: [] };
+  const rankedWithEntry = brief.ranked.flatMap((r) => (r.entry ? [{ ...r, entry: r.entry }] : []));
+
   // The newest cost stands in as the source for the spend total.
   const latestCost = costRows[0];
-  const sources = await loadSources(
-    db,
-    [valuationRow, policyRow, latestCost, contactRow].flatMap((row) => (row ? [row.citation_id] : [])),
-  );
+  const sources = await loadSources(db, [
+    ...[valuationRow, policyRow, latestCost, contactRow].flatMap((row) => (row ? [row.citation_id] : [])),
+    ...brief.sentences.flatMap((s) => (s.citation_id === null ? [] : [s.citation_id])),
+    ...rankedWithEntry.map((r) => r.entry.citation_id),
+  ]);
+  const block = (name: 'where_it_stands' | 'what_is_next' | 'watch_for') =>
+    brief.sentences
+      .filter((s) => s.block === name && s.citation_id !== null)
+      .map((s) => ({ text: s.text, source: sourceOf(sources, s.citation_id!) }));
+  const status = briefStatus(matterId);
 
   const detail: MatterDetail = {
     matterId: String(matter.id),
@@ -119,8 +148,20 @@ export async function readMatterDetail(
       source: sourceOf(sources, contactRow.citation_id),
     },
     summaryAsOf: summaryRow ? iso(summaryRow.generated_at) : null,
-    brief: { whereItStands: [], whatIsNext: [], watchFor: [] },
-    rankedEntries: [],
+    briefStatus: status === 'idle' ? 'ready' : status,
+    briefError: status === 'failed' ? briefFailure(matterId) : null,
+    brief: {
+      whereItStands: block('where_it_stands'),
+      whatIsNext: block('what_is_next'),
+      watchFor: block('watch_for'),
+    },
+    rankedEntries: rankedWithEntry.map((r) => ({
+      id: String(r.entry.id),
+      date: iso(r.entry.occurred_at),
+      title: r.title,
+      reason: r.reason,
+      source: sourceOf(sources, r.entry.citation_id),
+    })),
     totalEntries: entryCount.count ?? 0,
     injuries: [],
     providers: [],
@@ -128,7 +169,7 @@ export async function readMatterDetail(
     visits: [],
     requests: [],
     documents: [],
-    providerSummary: [],
+    providerSummary: brief.sentences.filter((s) => s.block === 'provider').map((s) => s.text),
     pausedReason: matter.paused_reason,
   };
   return matterDetailSchema.parse(detail);
