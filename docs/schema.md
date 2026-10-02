@@ -70,6 +70,19 @@ publishable key, and RLS decides what each user sees.
 - **Not synced from Clio:** valuations, policies, injuries, providers, visits, requests and milestones. Clio has no native field for them; those panels show empty states.
 - **Not handled yet:** records deleted in Clio stay in Supabase.
 
+## Catch-up briefs
+
+`server/briefs/briefs.ts` writes the brief with the model call in `server/ai/brief.ts` and caches it in `matter_summaries` (one row per brief, the latest wins), `summary_sentences` and `summary_ranked_entries`.
+
+- **Reads never call the model** when a brief exists. The model runs only:
+  - on the first open of a matter with no brief
+  - after a sync, for matters whose records changed
+  - when someone clicks Regenerate
+- **`matter_summaries.input_hash`** is a sha256 of exactly what the model read, plus `BRIEF_VERSION` and the model id. After a sync, a matter gets a new brief only if its hash differs. Bump `BRIEF_VERSION` when the prompt changes.
+- **The model cites refs, not ids.** In its input, entries are `E<entry id>`, open tasks `T<task id>` and costs `C<citation id>`. The server maps refs back to citations and drops any sentence whose ref isn't in the input. Costs use the citation id because cost rows are re-inserted on every sync.
+- **Blocks.** `where_it_stands`, `what_is_next` and `watch_for` are firm-facing and always cited. `provider` is the provider-safe summary (no figures or strategy) and has no citation; it is returned as `providerSummary`.
+- **Inputs** are the synced records only. Document contents aren't read yet.
+
 ## Mapping to the app
 
 - **Stage values.** Database enums are lowercase (`treatment`). The UI's zod enums are capitalised (`Treatment`). The server maps them in `server/matters/shared.ts`.

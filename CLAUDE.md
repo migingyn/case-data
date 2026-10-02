@@ -40,6 +40,13 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
 - `server/sync/`: Clio → Supabase sync (`POST /api/sync`, also run after
   connecting). `mapClio.ts` holds the pure mapping rules; `syncClio.ts`
   writes them, keyed on Clio ids so re-running updates instead of duplicating
+- `server/ai/brief.ts`: the catch-up brief model call (prompt constant,
+  strict JSON schema, `chat.completions`, low reasoning effort), modeled on
+  `AiPrompt.tsx`. `server/briefs/briefs.ts` caches briefs in
+  `matter_summaries`: reads never call the model; only first open of a
+  matter with no brief, a sync that changes its records (`input_hash`), or
+  Regenerate (`POST /api/matters/:id/brief`) do. Bump `BRIEF_VERSION` when
+  the prompt changes
 - `server/matters/` + `server/routes/matters.ts`: `/api/matters`,
   `/api/matters/:id` and `/api/firm`, read with the service role and parsed
   with `src/types` schemas. Stopgap until sign-in, when the browser reads
