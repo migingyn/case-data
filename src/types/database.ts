@@ -456,7 +456,7 @@ export type Database = {
           created_at: string
           firm_id: number
           id: number
-          lien_type: string
+          lien_type: string | null
           matter_id: number
           provider_id: number
         }
@@ -464,7 +464,7 @@ export type Database = {
           created_at?: string
           firm_id: number
           id?: never
-          lien_type: string
+          lien_type?: string | null
           matter_id: number
           provider_id: number
         }
@@ -472,7 +472,7 @@ export type Database = {
           created_at?: string
           firm_id?: number
           id?: never
-          lien_type?: string
+          lien_type?: string | null
           matter_id?: number
           provider_id?: number
         }
@@ -859,18 +859,21 @@ export type Database = {
           created_at: string
           id: number
           name: string
+          source_key: string | null
           specialty: string
         }
         Insert: {
           created_at?: string
           id?: never
           name: string
+          source_key?: string | null
           specialty: string
         }
         Update: {
           created_at?: string
           id?: never
           name?: string
+          source_key?: string | null
           specialty?: string
         }
         Relationships: []
