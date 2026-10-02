@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { newActivity } from '@/helpers/matters';
 import { useMatterDashboard, useMatterDetail, useOpenMatter } from '@/hooks/matters';
 import { useCatchUpDepth } from '@/hooks/settings';
+import { useMatterShares } from '@/hooks/shares';
 import CatchUpPanel from './CatchUpPanel';
 import InjuriesPanel from './InjuriesPanel';
 import KpiStrip from './KpiStrip';
@@ -34,6 +35,7 @@ const MatterView: FC<MatterViewProps> = ({ id }) => {
   const dashboard = useMatterDashboard();
   const detailQuery = useMatterDetail(id);
   const [depth, setDepth] = useCatchUpDepth();
+  const shares = useMatterShares(id);
 
   const now = dashboard.dataUpdatedAt;
   const matter = dashboard.data?.matters.find((item) => item.id === id);
@@ -88,7 +90,15 @@ const MatterView: FC<MatterViewProps> = ({ id }) => {
         <div className="flex flex-col gap-6">
           <TasksPanel tasks={matter.tasks} now={now} />
           {detail !== null && <InjuriesPanel matterId={id} injuries={detail?.injuries} />}
-          {detail !== null && <ProvidersPanel providers={detail?.providers} />}
+          {detail !== null && (
+            <ProvidersPanel
+              matterId={id}
+              providers={detail?.providers}
+              requests={detail?.requests}
+              shares={shares.data}
+              now={now}
+            />
+          )}
         </div>
       </div>
     </div>

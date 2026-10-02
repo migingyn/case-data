@@ -39,6 +39,13 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   `facts` sub-routes render `src/pages/ComingSoon/` until those screens exist
 - `src/components/SourceChip/` + `src/components/SourceDrawer/`: every cited
   fact gets a `SourceChip`; chips open the drawer via `SourceDrawerProvider`
+- `src/pages/Share/` (`/app/matters/:id/share`): share composer; shares are
+  prototype server state in `src/api/shares.ts` (localStorage, so the provider
+  tab sees publishes). `src/helpers/shares.ts` `buildProviderView` is the one
+  place that decides what a provider may see
+- `src/components/ProviderCaseView/` renders both the composer preview and the
+  provider page (`/provider/:providerId/matters/:matterId`, in `ProviderShell`),
+  so they cannot drift apart
 - `src/lib/sessionStore.ts`: sessionStorage-backed client state (matters
   opened this session, catch-up depth) read with `useSessionValue`
 - `src/api/sample/`: fabricated sample data behind `src/api/matters.ts` until
