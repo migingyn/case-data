@@ -44,12 +44,22 @@ const KpiStrip: FC<KpiStripProps> = ({ detail, now }) => (
       ))
     ) : (
       <>
-        <KpiCard label="Case value" figure={formatCurrency(detail.caseValue.expected)} source={detail.caseValue.source}>
-          <p>
-            Range <Mono>{formatCurrency(detail.caseValue.low)}</Mono> to{' '}
-            <Mono>{formatCurrency(detail.caseValue.high)}</Mono>
-          </p>
-          <p>Updated <Mono>{formatShortDate(detail.caseValue.updatedAt)}</Mono></p>
+        <KpiCard
+          label="Case value"
+          figure={detail.caseValue ? formatCurrency(detail.caseValue.expected) : 'Not valued'}
+          source={detail.caseValue?.source ?? null}
+        >
+          {detail.caseValue ? (
+            <>
+              <p>
+                Range <Mono>{formatCurrency(detail.caseValue.low)}</Mono> to{' '}
+                <Mono>{formatCurrency(detail.caseValue.high)}</Mono>
+              </p>
+              <p>Updated <Mono>{formatShortDate(detail.caseValue.updatedAt)}</Mono></p>
+            </>
+          ) : (
+            <p>No valuation on file yet</p>
+          )}
         </KpiCard>
         <KpiCard
           label="Coverage behind it"
@@ -65,16 +75,30 @@ const KpiStrip: FC<KpiStripProps> = ({ detail, now }) => (
             <p>No policy on file yet</p>
           )}
         </KpiCard>
-        <KpiCard label="Firm spend to date" figure={formatCurrency(detail.firmSpend.amount)} source={detail.firmSpend.source}>
-          <p>As of <Mono>{formatShortDate(detail.firmSpend.asOf)}</Mono></p>
+        <KpiCard
+          label="Firm spend to date"
+          figure={formatCurrency(detail.firmSpend?.amount ?? 0)}
+          source={detail.firmSpend?.source ?? null}
+        >
+          {detail.firmSpend ? (
+            <p>Latest cost <Mono>{formatShortDate(detail.firmSpend.asOf)}</Mono></p>
+          ) : (
+            <p>No costs recorded</p>
+          )}
         </KpiCard>
         <KpiCard
           label="Last client contact"
-          figure={formatDaysAgo(daysSince(detail.lastContact.at, now))}
-          source={detail.lastContact.source}
+          figure={detail.lastContact ? formatDaysAgo(daysSince(detail.lastContact.at, now)) : 'Not recorded'}
+          source={detail.lastContact?.source ?? null}
         >
-          <p>{detail.lastContact.who}</p>
-          <p>{detail.lastContact.channel}</p>
+          {detail.lastContact ? (
+            <>
+              <p>{detail.lastContact.who}</p>
+              <p>{detail.lastContact.channel}</p>
+            </>
+          ) : (
+            <p>No calls or emails with the client on file</p>
+          )}
         </KpiCard>
       </>
     )}

@@ -34,10 +34,20 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   and `clioGet` with auto-refresh. `openai.ts` is the shared OpenAI client.
   Routes are bound to localhost and unauthenticated until the app has sign-in.
   Only `HttpError` messages reach the client; never log tokens or Clio/OpenAI
-  response bodies
+  response bodies. `tsconfig.server.json` includes `src/types`, so the server
+  imports and parses with the same zod contracts as the app
+- `server/supabase.ts`: service-role client (bypasses RLS), server only
+- `server/sync/`: Clio → Supabase sync (`POST /api/sync`, also run after
+  connecting). `mapClio.ts` holds the pure mapping rules; `syncClio.ts`
+  writes them, keyed on Clio ids so re-running updates instead of duplicating
+- `server/matters/` + `server/routes/matters.ts`: `/api/matters`,
+  `/api/matters/:id` and `/api/firm`, read with the service role and parsed
+  with `src/types` schemas. Stopgap until sign-in, when the browser reads
+  through RLS instead
 - `src/api/integrations.ts` → `src/hooks/integrations.ts` →
-  `src/pages/Integrations/` (`/app/integrations`): Clio connect/disconnect and
-  an OpenAI test call. The browser reaches Clio and OpenAI only through `/api`
+  `src/pages/Integrations/` (`/app/integrations`): Clio connect/disconnect,
+  Sync now with counts, and an OpenAI test call. The browser reaches Clio and
+  OpenAI only through `/api`
 - `src/lib/`: `env.ts` (zod-validated `VITE_*` env), `supabase.ts`,
   `queryClient.ts`, `utils.ts` (`cn`, from shadcn)
 - `src/api/auth.ts` + `src/components/AuthProvider/` + `src/hooks/auth.ts`:
@@ -50,7 +60,7 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
 - `supabase/migrations/`: schema, RLS and grants. See `docs/schema.md` for
   which screen reads each table and who writes it (backend `service_role`
   for Clio sync and LLM output; app users only for shares and their own
-  state). The app still reads sample data until `src/api/` is switched over
+  state)
 - `src/pages/<Route>/`: routes, registered in `src/App.tsx` (dashboard at `/app`,
   matter at `/app/matters/:id`)
 - `src/pages/Matter/`: matter view (`/app/matters/:id`); `share`, `record` and
@@ -68,8 +78,9 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   that snapshot, and "what changed" diffs consecutive snapshots
 - `src/lib/sessionStore.ts`: sessionStorage-backed client state (matters
   opened this session, catch-up depth) read with `useSessionValue`
-- `src/api/sample/`: fabricated sample data behind `src/api/matters.ts` until
-  the matters tables exist in Supabase; swap the API function, not the hooks
+- `src/api/matters.ts` and `src/api/firm.ts` read real synced data from `/api`.
+  `src/api/sample/`: fabricated data still behind `src/api/shares.ts` (share
+  composer and provider portal) until shares move to Supabase
 
 ## Environment
 

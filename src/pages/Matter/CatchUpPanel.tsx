@@ -13,7 +13,7 @@ interface CatchUpPanelProps {
   /** This visit's new items, fixed when the page opened. */
   sinceItems: Activity[];
   detail: MatterDetail | undefined;
-  /** False when the sample has no summary for this matter. */
+  /** False when the matter's detail couldn't be found. */
   hasDetail: boolean;
   depth: CatchUpDepth | undefined;
   onDepthChange: (depth: CatchUpDepth) => void;
@@ -73,7 +73,7 @@ const CatchUpPanel: FC<CatchUpPanelProps> = ({ matterId, sinceItems, detail, has
           </TabsList>
         </div>
         <TabsContent value="brief" className="flex flex-col gap-6 p-4">
-          {detail && (
+          {detail?.summaryAsOf && (
             <p className="text-[13px] text-muted-foreground">
               Summary current as of <time dateTime={detail.summaryAsOf}>{formatDateTime(detail.summaryAsOf)}</time>.
               Shared with everyone on this matter.
@@ -81,16 +81,17 @@ const CatchUpPanel: FC<CatchUpPanelProps> = ({ matterId, sinceItems, detail, has
           )}
           <SinceList items={sinceItems} />
           {!hasDetail ? (
-            <p className="text-sm text-muted-foreground">
-              No summary for this matter yet. In the sample data, Maria Alvarez, James Whitfield
-              and Devon Brooks have full summaries.
-            </p>
+            <p className="text-sm text-muted-foreground">No summary for this matter.</p>
           ) : detail === undefined ? (
             <div className="flex flex-col gap-2" aria-hidden>
               <Skeleton className="h-4 w-28" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
             </div>
+          ) : !detail.summaryAsOf ? (
+            <p className="text-sm text-muted-foreground">
+              No summary yet. The brief appears here once one is generated from this matter's record.
+            </p>
           ) : (
             <>
               <BriefBlock title="Where it stands" sentences={detail.brief.whereItStands} />

@@ -5,8 +5,8 @@ import { getMatterDashboard, getMatterDetail } from '@/api/matters';
 import { createSessionStore, useSessionValue } from '@/lib/sessionStore';
 import type { MatterDashboard } from '@/types/matters';
 
-// Sample data isn't per-user yet. Once matters come from Supabase, add the
-// user id to these keys and gate the query on `enabled: !!user`.
+// Matters are firm-wide (served by the API server) until there's sign-in;
+// then add the user id to these keys and gate the query on `enabled: !!user`.
 export const matterKeys = {
   all: ['matters'] as const,
   dashboard: () => [...matterKeys.all, 'dashboard'] as const,

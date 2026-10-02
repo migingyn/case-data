@@ -65,15 +65,23 @@ const MatterRow: FC<MatterRowProps> = ({ summary, now }) => {
         )}
       </td>
       <td className="px-3 py-3">
-        <span className={cn(hasContactGap && 'font-semibold text-warning')}>
-          {formatDaysAgo(contactDays)}
-        </span>
+        {contactDays === null ? (
+          <span className="text-muted-foreground">Not recorded</span>
+        ) : (
+          <span className={cn(hasContactGap && 'font-semibold text-warning')}>
+            {formatDaysAgo(contactDays)}
+          </span>
+        )}
         {hasContactGap && <span className="sr-only">, over {CONTACT_GAP_DAYS} days</span>}
       </td>
       <td className="py-3 pr-4 pl-3 text-right font-mono text-[13px] tabular-nums">
         <span className="block">
           <span className="sr-only">Value </span>
-          {formatCurrency(matter.estimatedValue)}
+          {matter.estimatedValue === null ? (
+            <span className="text-muted-foreground">No valuation</span>
+          ) : (
+            formatCurrency(matter.estimatedValue)
+          )}
         </span>
         <span className="block text-muted-foreground">
           <span className="sr-only">Coverage </span>

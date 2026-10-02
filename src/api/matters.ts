@@ -1,41 +1,44 @@
-import {
-  matterDashboardSchema,
-  matterDetailSchema,
-  type MatterDashboard,
-  type MatterDetail,
-} from '@/types/matters';
-import { sampleMatterDetails } from './sample/matterDetails';
-import { sampleDashboard } from './sample/matters';
+import { z } from 'zod';
+import { matterDetailSchema, matterSchema, type MatterDashboard, type MatterDetail } from '@/types/matters';
+import { ApiError, apiRequest } from './http';
 
-const SIMULATED_LATENCY_MS = 600;
-const DETAIL_LATENCY_MS = 900;
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const DAY_MS = 86_400_000;
+const LAST_VISIT_KEY = 'case-digest:last-visit';
+const VISIT_BASELINE_KEY = 'case-digest:visit-baseline';
 
 /**
- * The signed-in user's matters plus when they last visited.
- * Backed by sample data until the matters tables exist in Supabase.
- * Activity dated in the future hasn't "arrived" yet and is held back.
+ * When the user was last here, fixed for this tab's session: the start of
+ * their previous session, or a week ago on first use. Kept in browser
+ * storage until there's sign-in and `firm_members.last_visit_at` to use.
  */
-export async function getMatterDashboard(): Promise<MatterDashboard> {
-  await wait(SIMULATED_LATENCY_MS);
-  const now = Date.now();
-  const dashboard = matterDashboardSchema.parse(sampleDashboard);
-  return {
-    ...dashboard,
-    matters: dashboard.matters.map((matter) => ({
-      ...matter,
-      activity: matter.activity.filter((item) => Date.parse(item.occurredAt) <= now),
-    })),
-  };
+function visitBaseline(): string {
+  const fallback = new Date(Date.now() - 7 * DAY_MS).toISOString();
+  try {
+    const baseline = sessionStorage.getItem(VISIT_BASELINE_KEY);
+    if (baseline) return baseline;
+    const previous = localStorage.getItem(LAST_VISIT_KEY) ?? fallback;
+    sessionStorage.setItem(VISIT_BASELINE_KEY, previous);
+    localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString());
+    return previous;
+  } catch {
+    return fallback;
+  }
 }
 
-/**
- * Header facts, KPIs, the catch-up brief, ranked entries, injuries and
- * providers for one matter. Null when the sample has no detail for it.
- */
+const dashboardResponseSchema = z.object({ matters: z.array(matterSchema) });
+
+/** The firm's matters, synced from Clio, plus when the user last visited. */
+export async function getMatterDashboard(): Promise<MatterDashboard> {
+  const { matters } = dashboardResponseSchema.parse(await apiRequest('/api/matters'));
+  return { lastVisitAt: visitBaseline(), matters };
+}
+
+/** Header facts, KPIs and side panels for one matter. Null when it doesn't exist. */
 export async function getMatterDetail(matterId: string): Promise<MatterDetail | null> {
-  await wait(DETAIL_LATENCY_MS);
-  const detail = sampleMatterDetails.find((item) => item.matterId === matterId);
-  return detail ? matterDetailSchema.parse(detail) : null;
+  try {
+    return matterDetailSchema.parse(await apiRequest(`/api/matters/${encodeURIComponent(matterId)}`));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }

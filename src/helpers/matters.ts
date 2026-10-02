@@ -40,7 +40,8 @@ export interface MatterSummary {
   newItems: Activity[];
   nextTask: Task | null;
   overdueTasks: Task[];
-  contactDays: number;
+  /** Null when no client contact is on record. */
+  contactDays: number | null;
   hasContactGap: boolean;
 }
 
@@ -53,14 +54,16 @@ export function summarizeMatter(matter: Matter, seenAt: number, now: number): Ma
   const openTasks = matter.tasks
     .filter((task) => !task.done)
     .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt));
-  const contactDays = daysSince(matter.lastClientContactAt, now);
+  const contactDays =
+    matter.lastClientContactAt === null ? null : daysSince(matter.lastClientContactAt, now);
   return {
     matter,
     newItems: newActivity(matter, seenAt),
     nextTask: openTasks[0] ?? null,
     overdueTasks: openTasks.filter((task) => isOverdue(task, now)),
     contactDays,
-    hasContactGap: contactDays > CONTACT_GAP_DAYS,
+    // No contact on record is unknown, not a gap.
+    hasContactGap: contactDays !== null && contactDays > CONTACT_GAP_DAYS,
   };
 }
 
@@ -116,8 +119,9 @@ const sortValue: Record<SortKey, (s: MatterSummary) => number | string> = {
   stage: (s) => matterStages.indexOf(s.matter.stage),
   changed: (s) => s.newItems.length,
   deadline: deadlineTime,
-  contact: (s) => s.contactDays,
-  value: (s) => s.matter.estimatedValue,
+  // Unknown sorts as the lowest value.
+  contact: (s) => s.contactDays ?? -1,
+  value: (s) => s.matter.estimatedValue ?? -1,
 };
 
 function compareValues(a: number | string, b: number | string): number {
@@ -181,12 +185,12 @@ export function needsYouToday(summaries: MatterSummary[], now: number): NeedsYou
   }
   result.contactGaps = summaries
     .filter((s) => s.hasContactGap)
-    .sort((a, b) => b.contactDays - a.contactDays)
+    .sort((a, b) => (b.contactDays ?? 0) - (a.contactDays ?? 0))
     .map((s) => ({
       id: `gap-${s.matter.id}`,
       matterId: s.matter.id,
       title: s.matter.clientName,
-      detail: `No contact in ${dayCount(s.contactDays)}`,
+      detail: `No contact in ${dayCount(s.contactDays ?? 0)}`,
     }));
   return result;
 }
