@@ -33,7 +33,10 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   these files. Build app components in their own folders that compose them.
 - `src/types/database.ts`: generated Supabase types (currently a placeholder;
   regenerate after the first migration)
-- `src/pages/<Route>/`: routes, registered in `src/App.tsx`
+- `src/pages/<Route>/`: routes, registered in `src/App.tsx` (dashboard at `/app`,
+  matter at `/app/matters/:id`)
+- `src/api/sample/`: fabricated sample data behind `src/api/matters.ts` until
+  the matters tables exist in Supabase; swap the API function, not the hooks
 - `supabase/migrations/`: schema source of truth
 
 ## Environment
