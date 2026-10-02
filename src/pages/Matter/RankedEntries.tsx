@@ -42,7 +42,9 @@ const RankedEntries: FC<RankedEntriesProps> = ({ matterId, detail }) => (
       </div>
     ) : detail.rankedEntries.length === 0 ? (
       <p className="text-sm text-muted-foreground">
-        The most important entries are picked when the summary is generated.
+        {detail.briefStatus === 'generating'
+          ? 'Picking the entries that matter…'
+          : 'The most important entries are picked when the brief is written.'}
       </p>
     ) : (
       <ol className="-my-2 flex flex-col divide-y">

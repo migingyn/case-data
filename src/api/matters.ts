@@ -42,3 +42,8 @@ export async function getMatterDetail(matterId: string): Promise<MatterDetail | 
     throw error;
   }
 }
+
+/** Asks the server to write a fresh brief in the background. */
+export async function regenerateBrief(matterId: string): Promise<void> {
+  await apiRequest(`/api/matters/${encodeURIComponent(matterId)}/brief`, { method: 'POST' });
+}
