@@ -6,6 +6,7 @@ import ComingSoonPage from '@/pages/ComingSoon/ComingSoonPage';
 import HomePage from '@/pages/Home/HomePage';
 import MatterPage from '@/pages/Matter/MatterPage';
 import ProviderCasePage from '@/pages/ProviderCase/ProviderCasePage';
+import SharePage from '@/pages/Share/SharePage';
 
 const App: FC = () => (
   <BrowserRouter>
@@ -14,7 +15,8 @@ const App: FC = () => (
       <Route path="/app" element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="matters/:id" element={<MatterPage />} />
-        <Route path="matters/:id/share" element={<ComingSoonPage title="Share with provider" />} />
+        <Route path="matters/:id/share" element={<SharePage />} />
+        <Route path="matters/:id/share/pages" element={<ComingSoonPage title="Document page picker" />} />
         <Route path="matters/:id/record" element={<ComingSoonPage title="Full record" />} />
         <Route path="matters/:id/facts" element={<ComingSoonPage title="Review facts" />} />
       </Route>
