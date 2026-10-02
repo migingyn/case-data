@@ -11,7 +11,8 @@ and Geist Mono fonts, the closest match to Vercel's Geist design system.
 
 ```bash
 npm install        # install dependencies
-npm run dev        # dev server at http://localhost:5173
+npm run dev        # Vite at http://127.0.0.1:5173 + API server (server/) together
+npm run dev:server # API server only, http://127.0.0.1:8787
 npm run build      # typecheck (tsc -b) + production build
 npm run lint       # oxlint
 npx shadcn@latest add <component>   # add a shadcn/ui component
@@ -24,6 +25,18 @@ There is no test suite yet.
 Layering follows the `file-architecture` skill: components → `src/hooks/` →
 `src/api/` → `src/lib/supabase.ts`. Import from `src` with the `@/` alias.
 
+- `server/`: Express API server (TypeScript, run by `tsx`, typechecked via
+  `tsconfig.server.json`). The only place Clio and OpenAI credentials live;
+  Vite proxies `/api` to it in dev. `env.ts` validates its non-`VITE_` env.
+  `clio/` has OAuth (`/api/clio/connect`, `/callback`, `/disconnect`), a token
+  store in `DATA_DIR/clio-tokens.json` (one firm connection; no sign-in yet)
+  and `clioGet` with auto-refresh. `openai.ts` is the shared OpenAI client.
+  Routes are bound to localhost and unauthenticated until the app has sign-in.
+  Only `HttpError` messages reach the client; never log tokens or Clio/OpenAI
+  response bodies
+- `src/api/integrations.ts` → `src/hooks/integrations.ts` →
+  `src/pages/Integrations/` (`/app/integrations`): Clio connect/disconnect and
+  an OpenAI test call. The browser reaches Clio and OpenAI only through `/api`
 - `src/lib/`: `env.ts` (zod-validated `VITE_*` env), `supabase.ts`,
   `queryClient.ts`, `utils.ts` (`cn`, from shadcn)
 - `src/api/auth.ts` + `src/components/AuthProvider/` + `src/hooks/auth.ts`:
