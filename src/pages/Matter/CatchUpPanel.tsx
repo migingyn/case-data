@@ -2,9 +2,11 @@ import { ArrowRight } from 'lucide-react';
 import type { FC } from 'react';
 import { Link } from 'react-router';
 import SourceChip from '@/components/SourceChip/SourceChip';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTime, formatShortDate } from '@/helpers/matters';
+import { useRegenerateBrief } from '@/hooks/matters';
 import { catchUpDepthSchema, type CatchUpDepth } from '@/types/settings';
 import type { Activity, MatterDetail, SourcedSentence } from '@/types/matters';
 
@@ -53,6 +55,67 @@ const SinceList: FC<{ items: Activity[] }> = ({ items }) => (
   </div>
 );
 
+const BriefSkeleton: FC = () => (
+  <div className="flex flex-col gap-2" aria-hidden>
+    <Skeleton className="h-4 w-28" />
+    <Skeleton className="h-4 w-full" />
+    <Skeleton className="h-4 w-5/6" />
+  </div>
+);
+
+/** The cached brief, or what's happening while it's written. */
+const Brief: FC<{ matterId: string; detail: MatterDetail }> = ({ matterId, detail }) => {
+  const regenerate = useRegenerateBrief(matterId);
+  const generating = detail.briefStatus === 'generating' || regenerate.isPending;
+  const failure = detail.briefStatus === 'failed' ? detail.briefError : (regenerate.error?.message ?? null);
+
+  if (!detail.summaryAsOf) {
+    return generating ? (
+      <div className="flex flex-col gap-3" aria-busy>
+        <p role="status" className="text-sm text-muted-foreground">
+          Writing the brief from {detail.totalEntries} entries. This takes about half a minute.
+        </p>
+        <BriefSkeleton />
+      </div>
+    ) : (
+      <div role="alert" className="flex flex-col items-start gap-2 text-sm">
+        <p className="text-muted-foreground">{failure ?? 'No brief for this matter yet.'}</p>
+        <Button variant="outline" size="sm" onClick={() => regenerate.mutate()}>
+          {failure ? 'Try again' : 'Write the brief'}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[13px] text-muted-foreground">
+          Summary current as of <time dateTime={detail.summaryAsOf}>{formatDateTime(detail.summaryAsOf)}</time>.
+          Shared with everyone on this matter.
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-[13px] text-muted-foreground"
+          disabled={generating}
+          onClick={() => regenerate.mutate()}
+        >
+          {generating ? 'Updating…' : 'Regenerate'}
+        </Button>
+      </div>
+      {failure && !generating && (
+        <p role="alert" className="text-[13px] text-destructive">
+          {failure} The brief below is the last one written.
+        </p>
+      )}
+      <BriefBlock title="Where it stands" sentences={detail.brief.whereItStands} />
+      <BriefBlock title="What is next" sentences={detail.brief.whatIsNext} />
+      <BriefBlock title="Watch for" sentences={detail.brief.watchFor} />
+    </>
+  );
+};
+
 const CatchUpPanel: FC<CatchUpPanelProps> = ({ matterId, sinceItems, detail, hasDetail, depth, onDepthChange }) => (
   <section aria-labelledby="catch-up-heading" className="rounded-lg border">
     {depth === undefined ? (
@@ -73,32 +136,14 @@ const CatchUpPanel: FC<CatchUpPanelProps> = ({ matterId, sinceItems, detail, has
           </TabsList>
         </div>
         <TabsContent value="brief" className="flex flex-col gap-6 p-4">
-          {detail?.summaryAsOf && (
-            <p className="text-[13px] text-muted-foreground">
-              Summary current as of <time dateTime={detail.summaryAsOf}>{formatDateTime(detail.summaryAsOf)}</time>.
-              Shared with everyone on this matter.
-            </p>
-          )}
-          <SinceList items={sinceItems} />
           {!hasDetail ? (
             <p className="text-sm text-muted-foreground">No summary for this matter.</p>
           ) : detail === undefined ? (
-            <div className="flex flex-col gap-2" aria-hidden>
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-            </div>
-          ) : !detail.summaryAsOf ? (
-            <p className="text-sm text-muted-foreground">
-              No summary yet. The brief appears here once one is generated from this matter's record.
-            </p>
+            <BriefSkeleton />
           ) : (
-            <>
-              <BriefBlock title="Where it stands" sentences={detail.brief.whereItStands} />
-              <BriefBlock title="What is next" sentences={detail.brief.whatIsNext} />
-              <BriefBlock title="Watch for" sentences={detail.brief.watchFor} />
-            </>
+            <Brief matterId={matterId} detail={detail} />
           )}
+          <SinceList items={sinceItems} />
         </TabsContent>
         <TabsContent value="full" className="p-4">
           <p className="text-sm text-muted-foreground">

@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { getMatterDashboard, getMatterDetail } from '@/api/matters';
+import { getMatterDashboard, getMatterDetail, regenerateBrief } from '@/api/matters';
 import { createSessionStore, useSessionValue } from '@/lib/sessionStore';
 import type { MatterDashboard } from '@/types/matters';
 
@@ -31,10 +31,22 @@ export function useMatter(id: string) {
   });
 }
 
+const BRIEF_POLL_MS = 3_000;
+
 export function useMatterDetail(id: string) {
   return useQuery({
     queryKey: matterKeys.detail(id),
     queryFn: () => getMatterDetail(id),
+    // Poll only while the server is writing the brief; it's cached after that.
+    refetchInterval: (query) => (query.state.data?.briefStatus === 'generating' ? BRIEF_POLL_MS : false),
+  });
+}
+
+export function useRegenerateBrief(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => regenerateBrief(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: matterKeys.detail(id) }),
   });
 }
 

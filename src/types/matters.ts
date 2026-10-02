@@ -182,6 +182,13 @@ export const matterDetailSchema = z.object({
     .nullable(),
   /** When the catch-up brief was generated; null until it has been. */
   summaryAsOf: z.iso.datetime().nullable(),
+  /**
+   * Whether a brief is being written now (an older one may still show) or
+   * the last attempt failed. Defaults for sample data, which has no runs.
+   */
+  briefStatus: z.enum(['ready', 'generating', 'failed']).default('ready'),
+  /** Why the last brief attempt failed, when it did. */
+  briefError: z.string().nullable().default(null),
   brief: z.object({
     whereItStands: z.array(sourcedSentenceSchema),
     whatIsNext: z.array(sourcedSentenceSchema),

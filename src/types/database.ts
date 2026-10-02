@@ -498,6 +498,7 @@ export type Database = {
           firm_id: number
           generated_at: string
           id: number
+          input_hash: string | null
           matter_id: number
           model: string
           total_entries: number
@@ -506,6 +507,7 @@ export type Database = {
           firm_id: number
           generated_at?: string
           id?: never
+          input_hash?: string | null
           matter_id: number
           model: string
           total_entries: number
@@ -514,6 +516,7 @@ export type Database = {
           firm_id?: number
           generated_at?: string
           id?: never
+          input_hash?: string | null
           matter_id?: number
           model?: string
           total_entries?: number

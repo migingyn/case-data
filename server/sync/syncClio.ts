@@ -1,4 +1,5 @@
 import type { SyncResult, SyncStatus } from '../../src/types/integrations';
+import { refreshStaleBriefs } from '../briefs/briefs.ts';
 import { getWhoAmI } from '../clio/client.ts';
 import {
   listCalendarEntries,
@@ -268,6 +269,9 @@ async function runSync(): Promise<SyncResult> {
   for (const part of chunk(costRows)) {
     check(await db.from('costs').insert(part), 'cost insert');
   }
+
+  // Rewrite briefs whose records changed; the sync doesn't wait for them.
+  void refreshStaleBriefs(firmId, syncedMatterIds);
 
   return {
     finishedAt: new Date().toISOString(),
