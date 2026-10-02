@@ -50,10 +50,31 @@ publishable key, and RLS decides what each user sees.
 - **Money** is `numeric(14, 2)` in dollars. **Times** are `timestamptz`.
 - **Document page images** go in Storage under `documents.storage_path`. Serve pages to providers from the backend after checking that the share version permits that page, and apply `document_redactions` there.
 
+## Clio sync
+
+`server/sync/` copies the connected Clio account into these tables (`POST /api/sync`). Mapping rules live in `server/sync/mapClio.ts`.
+
+| Clio | Rows written |
+|---|---|
+| Account (`who_am_i`) | `firms`, keyed on `clio_account_id` |
+| Open and pending matters | `clients` (the matter's client) and `matters`. `lead_attorney_name` holds Clio's responsible attorney until Clio users map to `firm_members` |
+| Notes | `documents` (`note`), `matter_entries` (`note`) |
+| Emails and calls | `documents` (`email` / `call_log`), `matter_entries` (`email`, `client_message` when the client sent it, calls as `note`), `client_contacts` when the client took part |
+| Tasks with a due date | `documents` (`task`), `tasks` |
+| Documents | `documents` (kind guessed from the name), `matter_entries` (`document`). File contents aren't downloaded yet |
+| Calendar entries that look like court dates | `documents` (`filing`), `matter_entries` (`court_date`) |
+| Expense entries | `documents` (`ledger`), `costs` |
+
+- **Every record gets one document and one citation**, so every row it produces can point at its source. `documents.clio_document_id` and `matter_entries.clio_id` hold a synthetic key, `<type>:<clio id>` (`note:`, `comm:`, `task:`, `doc:`, `cal:`, `exp:`).
+- **Re-running is safe.** Rows are upserted on their Clio keys. `client_contacts` and `costs` have no Clio key, so each sync replaces them for the synced matters.
+- **Not synced from Clio:** valuations, policies, injuries, providers, visits, requests and milestones. Clio has no native field for them; those panels show empty states.
+- **Not handled yet:** records deleted in Clio stay in Supabase.
+
 ## Mapping to the app
 
-- **Stage values.** Database enums are lowercase (`treatment`). The UI's zod enums are capitalised (`Treatment`), so map them once in `src/api/`.
-- **Swapping sample data for real data.** Replace the bodies of `getMatterDashboard`, `getMatterDetail` and the share functions in `src/api/`. The hooks and components stay the same.
+- **Stage values.** Database enums are lowercase (`treatment`). The UI's zod enums are capitalised (`Treatment`). The server maps them in `server/matters/shared.ts`.
+- **Reads go through the API server for now.** There is no sign-in, so `server/matters/` reads with the service role and serves `/api/matters`, `/api/matters/:id` and `/api/firm`. Once members sign in, `src/api/` can read through RLS directly, and the hooks and components stay the same.
+- **Share composer and provider portal** still use sample data in `src/api/shares.ts`.
 
 ## Commands
 
