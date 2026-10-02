@@ -44,6 +44,7 @@
     --color-new: var(--new);
     --color-new-surface: var(--new-surface);
     --color-warning: var(--warning);
+    --color-warning-surface: var(--warning-surface);
     --color-focus: var(--focus);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
@@ -91,6 +92,7 @@
     --new: oklch(0.488 0.217 264);
     --new-surface: oklch(0.97 0.014 254.6);
     --warning: oklch(0.555 0.163 49);
+    --warning-surface: oklch(0.987 0.022 95.3);
     --focus: oklch(0.546 0.245 262.9);
 }
 
@@ -129,6 +131,7 @@
     --new: oklch(0.809 0.105 251.8);
     --new-surface: oklch(0.282 0.091 267.9);
     --warning: oklch(0.828 0.189 84.4);
+    --warning-surface: oklch(0.279 0.077 45.6);
     --focus: oklch(0.707 0.165 254.6);
 }
 

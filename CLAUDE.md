@@ -35,6 +35,12 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   regenerate after the first migration)
 - `src/pages/<Route>/`: routes, registered in `src/App.tsx` (dashboard at `/app`,
   matter at `/app/matters/:id`)
+- `src/pages/Matter/`: matter view (`/app/matters/:id`); `share`, `record` and
+  `facts` sub-routes render `src/pages/ComingSoon/` until those screens exist
+- `src/components/SourceChip/` + `src/components/SourceDrawer/`: every cited
+  fact gets a `SourceChip`; chips open the drawer via `SourceDrawerProvider`
+- `src/lib/sessionStore.ts`: sessionStorage-backed client state (matters
+  opened this session, catch-up depth) read with `useSessionValue`
 - `src/api/sample/`: fabricated sample data behind `src/api/matters.ts` until
   the matters tables exist in Supabase; swap the API function, not the hooks
 - `supabase/migrations/`: schema source of truth
