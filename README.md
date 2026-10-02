@@ -67,3 +67,13 @@ Liens are usually negotiated down at the end so the client takes home more.
 | Bills and records | Confidential info not relevant to the provider |
  
 Sharing should be configurable per attorney.
+
+## 6. Tech Stack
+
+Current brainstormed tech stack is:
+
+Frontend: React + TypeScript
+│
+Backend: Express.js
+|
+Database:  Tanstack, Supabase
