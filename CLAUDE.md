@@ -58,8 +58,28 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
 ## Conventions
 
 - Default branch is `main`. Branch before committing; commit only when asked.
+  See Branch workflow below.
 - Match the style of surrounding code once there is some; don't introduce a
   second formatter or test framework alongside an existing one.
+
+## Branch workflow
+
+One branch per feature or fix. Don't pile unrelated work onto an existing
+branch, and never reuse a branch after its PR has merged.
+
+1. **Start from fresh `main`.** Before starting a new feature or fix:
+   `git switch main && git pull`.
+2. **Branch.** `git switch -c <type>/<short-kebab-description>`
+   (e.g. `feat/trip-list`, `fix/login-redirect`).
+3. **Work and commit** on that branch only; open a PR into `main`.
+4. **After the PR merges**, go back to step 1: switch to `main`, pull, and
+   optionally delete the merged branch (`git branch -d <branch>`).
+
+Before starting new work, check the current branch. If it's a branch whose
+PR has already merged, or the new work is unrelated to the branch's
+purpose, tell the user and start a new branch from fresh `main` instead of
+continuing on it. If there are uncommitted changes that belong to the old
+branch, ask before switching.
 
 ## Skills
 
@@ -181,7 +201,9 @@ asking again. Run these steps in order:
    handling), stop and tell the user instead of committing it.
 2. **Branch.** If on `main`, create a branch first, named
    `<type>/<short-kebab-description>` (e.g. `feat/trip-list`). If already on
-   a branch other than `main`, stay on it.
+   a branch other than `main`, stay on it — unless its PR has already merged
+   or the changes are unrelated to it; then follow Branch workflow and start
+   a new branch from fresh `main`.
 3. **Group.** Split the changes into logical commits, one change per commit
    (see Scope of a commit). Don't mix refactors or formatting with behavior
    changes.
