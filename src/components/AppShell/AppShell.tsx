@@ -14,6 +14,14 @@ const AppShell: FC = () => (
         <Link to="/app" className="rounded-sm text-[15px] font-semibold tracking-tight">
           Case Digest
         </Link>
+        <nav aria-label="Main" className="ml-auto">
+          <Link
+            to="/app/integrations"
+            className="rounded-sm text-sm text-muted-foreground hover:text-foreground"
+          >
+            Integrations
+          </Link>
+        </nav>
       </div>
     </header>
     <main id="main" className="mx-auto max-w-7xl px-6 pt-8 pb-16">
