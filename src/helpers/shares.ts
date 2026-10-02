@@ -1,13 +1,12 @@
-import type {
-  Matter,
-  MatterDetail,
-  Milestone,
-  Provider,
-  ProviderRequest,
-  Visit,
-} from '@/types/matters';
-import type { CoverageLevel, Share, ShareSettings } from '@/types/shares';
-import { formatCurrency } from './matters';
+import type { Matter, MatterDetail, Provider } from '@/types/matters';
+import {
+  providerSectionSchema,
+  type CoverageLevel,
+  type ProviderSection,
+  type ProviderView,
+  type Share,
+  type ShareSettings,
+} from '@/types/shares';
 
 const DAY_MS = 86_400_000;
 export const DEFAULT_EXPIRY_DAYS = 90;
@@ -66,70 +65,116 @@ export function selectedPageCount(settings: ShareSettings): number {
   return Object.values(settings.documentPages).reduce((sum, pages) => sum + pages.length, 0);
 }
 
-export interface TreatmentRow {
-  providerName: string;
-  visits: Visit[];
-  attended: number;
-  missed: number;
+const stageStatus: Record<Matter['stage'], string> = {
+  Intake: 'Active, intake',
+  Treatment: 'Active, in treatment',
+  Demand: 'Active, demand sent',
+  Negotiation: 'Active, in negotiation',
+  Litigation: 'Active, in litigation',
+  Settled: 'Closed, settled',
+};
+
+function statusOf(matter: Matter, detail: MatterDetail): NonNullable<ProviderView['status']> {
+  if (matter.stage === 'Settled') return { label: stageStatus.Settled, tone: 'closed' };
+  if (detail.pausedReason) return { label: `Paused, ${detail.pausedReason}`, tone: 'paused' };
+  return { label: stageStatus[matter.stage], tone: 'active' };
 }
 
-/** Exactly what a provider is shown. Anything not set here never reaches them. */
-export interface ProviderView {
-  clientName: string;
-  caseType: string;
-  status: string | null;
-  coverage: { level: CoverageLevel; text: string } | null;
-  milestones: Milestone[] | null;
-  treatment: TreatmentRow[] | null;
-  requests: ProviderRequest[] | null;
-  summary: string[] | null;
-  documents: { id: string; title: string; pages: string }[] | null;
-}
-
-function coverageText(detail: MatterDetail, level: CoverageLevel): string {
+function coverageOf(detail: MatterDetail, level: CoverageLevel): NonNullable<ProviderView['coverage']> {
   const coverage = detail.coverage;
-  if (!coverage) return 'Not yet confirmed';
-  if (level === 'indicator') return 'Yes, insurance coverage is confirmed';
-  if (level === 'carrier') return `${coverage.carrier} · ${coverage.type}`;
-  return `${formatCurrency(coverage.limit)} limit · ${coverage.carrier} · ${coverage.type}`;
+  if (level === 'indicator') {
+    return { level, onFile: coverage !== null, verifiedAt: coverage?.verifiedAt ?? null };
+  }
+  if (!coverage) return { level: 'none' };
+  const { carrier, type, verifiedAt } = coverage;
+  return level === 'carrier'
+    ? { level, carrier, type, verifiedAt }
+    : { level, limit: coverage.limit, carrier, type, verifiedAt };
 }
 
-export function buildProviderView(
-  matter: Matter,
-  detail: MatterDetail,
-  provider: Provider,
-  settings: ShareSettings,
-): ProviderView {
-  const providerNames = new Map(detail.providers.map((p) => [p.id, p.name]));
+function treatmentOf(detail: MatterDetail, now: number): NonNullable<ProviderView['treatment']> {
+  return detail.providers.map((p) => {
+    const visits = detail.visits
+      .filter((visit) => visit.providerId === p.id)
+      .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    const past = visits.filter((v) => v.status !== 'scheduled' && Date.parse(v.date) <= now);
+    const last = past[past.length - 1];
+    const next = visits.find((v) => v.status === 'scheduled' && Date.parse(v.date) > now);
+    return {
+      providerName: p.name,
+      lastVisit: last ? { date: last.date, attended: last.status === 'attended' } : null,
+      nextVisit: next?.date ?? null,
+      attended: past.filter((v) => v.status === 'attended').length,
+      scheduled: past.length,
+    };
+  });
+}
+
+interface ViewContext {
+  firmName: string;
+  matter: Matter;
+  detail: MatterDetail;
+  provider: Provider;
+  settings: ShareSettings;
+  now: number;
+}
+
+/**
+ * Builds exactly what a provider is shown for these settings. Unshared
+ * sections are null and coverage carries only what its level allows, so the
+ * result is safe to store and send as is.
+ */
+export function buildProviderView({ firmName, matter, detail, provider, settings, now }: ViewContext): ProviderView {
+  const reached = detail.milestones.filter((m) => m.done);
+  const next = detail.milestones.find((m) => !m.done);
   return {
+    firmName,
+    practiceName: provider.name,
+    sharedBy: detail.leadAttorney,
     clientName: matter.clientName,
     caseType: matter.caseType,
-    status: settings.status ? (matter.stage === 'Settled' ? 'Settled' : 'Active') : null,
-    coverage: settings.coverage
-      ? { level: settings.coverageLevel, text: coverageText(detail, settings.coverageLevel) }
-      : null,
-    milestones: settings.milestones ? detail.milestones : null,
-    treatment: settings.treatment
-      ? detail.providers.map((p) => {
-          const visits = detail.visits
-            .filter((visit) => visit.providerId === p.id)
-            .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-          return {
-            providerName: providerNames.get(p.id) ?? p.name,
-            visits,
-            attended: visits.filter((v) => v.status === 'attended').length,
-            missed: visits.filter((v) => v.status === 'missed').length,
-          };
-        })
+    status: settings.status ? statusOf(matter, detail) : null,
+    coverage: settings.coverage ? coverageOf(detail, settings.coverageLevel) : null,
+    milestones: settings.milestones
+      ? {
+          reached: reached.map(({ label, date }) => ({ label, date })),
+          next: next ? { label: next.label, date: next.date } : null,
+        }
       : null,
     requests: settings.requests
-      ? detail.requests.filter((request) => request.providerId === provider.id)
+      ? detail.requests
+          .filter((request) => request.providerId === provider.id)
+          .map(({ id, title, dueAt }) => ({ id, title, dueAt }))
       : null,
-    summary: settings.summary ? detail.providerSummary : null,
+    treatment: settings.treatment ? treatmentOf(detail, now) : null,
     documents: settings.documents
       ? detail.documents
-          .filter((doc) => (settings.documentPages[doc.id] ?? []).length > 0)
-          .map((doc) => ({ id: doc.id, title: doc.title, pages: formatPages(settings.documentPages[doc.id]) }))
+          .map((doc) => {
+            const allowed = new Set(settings.documentPages[doc.id] ?? []);
+            return { id: doc.id, title: doc.title, pages: doc.pages.filter((p) => allowed.has(p.number)) };
+          })
+          .filter((doc) => doc.pages.length > 0)
       : null,
+    summary: settings.summary ? detail.providerSummary : null,
   };
+}
+
+export const providerSectionLabels: Record<ProviderSection, string> = {
+  coverage: 'Coverage',
+  milestones: 'Where the case is',
+  requests: 'Requests',
+  treatment: 'Treatment',
+  documents: 'Documents',
+  summary: 'Case summary',
+};
+
+/** Sections whose content differs between two published versions. */
+export function changedSections(before: ProviderView, after: ProviderView): Set<ProviderSection> {
+  const changed = new Set<ProviderSection>();
+  for (const section of providerSectionSchema.options) {
+    if (after[section] !== null && JSON.stringify(before[section]) !== JSON.stringify(after[section])) {
+      changed.add(section);
+    }
+  }
+  return changed;
 }

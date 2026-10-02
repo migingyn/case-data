@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { documentPageSchema } from './shares';
 import { sourceSchema } from './sources';
 
 export const matterStages = [
@@ -112,6 +113,7 @@ export const providerRequestSchema = z.object({
   providerId: z.string(),
   title: z.string().min(1),
   requestedAt: z.iso.datetime(),
+  dueAt: z.iso.datetime(),
 });
 export type ProviderRequest = z.infer<typeof providerRequestSchema>;
 
@@ -119,6 +121,7 @@ export const shareableDocumentSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
   pageCount: z.number().int().positive(),
+  pages: z.array(documentPageSchema),
 });
 export type ShareableDocument = z.infer<typeof shareableDocumentSchema>;
 
@@ -182,5 +185,7 @@ export const matterDetailSchema = z.object({
   documents: z.array(shareableDocumentSchema),
   /** Plain-language summary safe to show providers: no figures, no strategy. */
   providerSummary: z.array(z.string().min(1)),
+  /** Why the case is on hold, or null when it is moving. */
+  pausedReason: z.string().nullable(),
 });
 export type MatterDetail = z.infer<typeof matterDetailSchema>;

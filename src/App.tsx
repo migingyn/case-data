@@ -6,6 +6,7 @@ import ComingSoonPage from '@/pages/ComingSoon/ComingSoonPage';
 import HomePage from '@/pages/Home/HomePage';
 import MatterPage from '@/pages/Matter/MatterPage';
 import ProviderCasePage from '@/pages/ProviderCase/ProviderCasePage';
+import UploadPage from '@/pages/ProviderCase/UploadPage';
 import SharePage from '@/pages/Share/SharePage';
 
 const App: FC = () => (
@@ -22,6 +23,7 @@ const App: FC = () => (
       </Route>
       <Route path="/provider" element={<ProviderShell />}>
         <Route path=":providerId/matters/:matterId" element={<ProviderCasePage />} />
+        <Route path=":providerId/matters/:matterId/requests/:requestId/upload" element={<UploadPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/app" replace />} />
     </Routes>

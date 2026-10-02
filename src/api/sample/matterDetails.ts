@@ -1,7 +1,7 @@
 // Fabricated matter detail for three sample matters. No real clients,
 // providers, carriers or cases. The summary text is fixed sample copy,
 // not generated.
-import { ago, ahead, DAY, HOUR, source } from './helpers';
+import { ago, ahead, DAY, HOUR, page, source } from './helpers';
 
 const clio = (n: number) => `https://app.clio.com/nc/#/matters/${n}`;
 
@@ -99,15 +99,37 @@ const alvarez = {
     { id: 'v-8', providerId: 'p-bayview', date: ahead(2 * DAY), status: 'scheduled' },
   ],
   requests: [
-    { id: 'rq-1', providerId: 'p-bayview', title: 'Therapy notes for all visits to date', requestedAt: ago(8 * DAY) },
-    { id: 'rq-2', providerId: 'p-bayview', title: 'Itemized billing ledger', requestedAt: ago(8 * DAY) },
-    { id: 'rq-3', providerId: 'p-coastal', title: 'Radiology report and images for the MRI', requestedAt: ago(7 * DAY) },
+    { id: 'rq-1', providerId: 'p-bayview', title: 'Therapy notes for all visits to date', requestedAt: ago(8 * DAY), dueAt: ago(1 * DAY) },
+    { id: 'rq-2', providerId: 'p-bayview', title: 'Itemized billing ledger', requestedAt: ago(8 * DAY), dueAt: ahead(6 * DAY) },
+    { id: 'rq-3', providerId: 'p-coastal', title: 'Radiology report and images for the MRI', requestedAt: ago(7 * DAY), dueAt: ahead(3 * DAY) },
   ],
   documents: [
-    { id: 'd-1', title: 'Police report', pageCount: 4 },
-    { id: 'd-2', title: 'Cervical and lumbar MRI', pageCount: 3 },
-    { id: 'd-3', title: 'Updated treatment plan', pageCount: 2 },
+    {
+      id: 'd-1', title: 'Police report', pageCount: 4,
+      pages: [
+        page(1, 'Traffic collision report, case no. [[10]]', 'Reporting officer: [[14]], badge [[6]]', 'Location: northbound on-ramp at Harbor Blvd.'),
+        page(2, 'Party 2 failed to stop and struck Party 1 from behind.', 'Party 2 cited for following too closely.', 'Party 1 complained of neck pain at the scene.'),
+        page(3, 'Witness statement: [[18]], phone [[12]]', 'The white sedan never slowed down before the crash.'),
+        page(4, 'Diagram of vehicle positions.', 'Tow: both vehicles drivable. No airbag deployment.'),
+      ],
+    },
+    {
+      id: 'd-2', title: 'Cervical and lumbar MRI', pageCount: 3,
+      pages: [
+        page(1, 'Patient: Maria Alvarez   DOB: [[10]]   MRN: [[9]]', 'Exam: MRI cervical and lumbar spine without contrast.', 'Impression: findings consistent with cervical and lumbar strain.'),
+        page(2, 'No fracture, herniation or cord compression.', 'Mild paraspinal muscle edema at C5-C6.'),
+        page(3, 'Electronically signed by [[16]], radiologist.'),
+      ],
+    },
+    {
+      id: 'd-3', title: 'Updated treatment plan', pageCount: 2,
+      pages: [
+        page(1, 'Patient continues to report neck and low back pain, 5/10.', 'Plan: physical therapy twice weekly for 8 additional weeks.'),
+        page(2, 'Re-evaluate after therapy. Consider pain management referral.', 'Insurance ID: [[12]]'),
+      ],
+    },
   ],
+  pausedReason: null,
   providerSummary: [
     'Maria is in active treatment after a rear-end collision. The other driver was cited at the scene.',
     'The insurer has accepted liability. The case will move to settlement talks once treatment ends.',
@@ -206,13 +228,35 @@ const whitfield = {
     { id: 'v-7', providerId: 'p-summit', date: ahead(9 * DAY), status: 'scheduled' },
   ],
   requests: [
-    { id: 'rq-1', providerId: 'p-summit', title: 'Neuropsychological testing report when complete', requestedAt: ago(5 * DAY) },
+    { id: 'rq-1', providerId: 'p-summit', title: 'Neuropsychological testing report when complete', requestedAt: ago(5 * DAY), dueAt: ahead(20 * DAY) },
   ],
   documents: [
-    { id: 'd-1', title: 'Operative report', pageCount: 3 },
-    { id: 'd-2', title: 'ER discharge summary', pageCount: 4 },
-    { id: 'd-3', title: 'Notice of deposition', pageCount: 2 },
+    {
+      id: 'd-1', title: 'Operative report', pageCount: 3,
+      pages: [
+        page(1, 'Procedure: L4-L5 microdiscectomy.', 'Surgeon: Riverside Neurosurgery. Anesthesia: general.'),
+        page(2, 'Herniated disc fragment removed. No complications.', 'Estimated blood loss minimal.'),
+        page(3, 'Patient account no. [[10]]', 'Discharged home the same day.'),
+      ],
+    },
+    {
+      id: 'd-2', title: 'ER discharge summary', pageCount: 4,
+      pages: [
+        page(1, 'Arrival by ambulance after a motor vehicle collision.', 'SSN: [[11]]'),
+        page(2, 'X-ray: closed distal radius fracture, left wrist.', 'Splinted. Orthopedic follow-up within one week.'),
+        page(3, 'CT head: no acute findings.'),
+        page(4, 'Discharged in stable condition with [[14]].'),
+      ],
+    },
+    {
+      id: 'd-3', title: 'Notice of deposition', pageCount: 2,
+      pages: [
+        page(1, 'Notice is given that the deposition of the defendant driver will be taken.'),
+        page(2, 'Location: [[22]]', 'A court reporter will be present.'),
+      ],
+    },
   ],
+  pausedReason: null,
   providerSummary: [
     'James was hit by a commercial truck. The case is in litigation and moving through discovery.',
     'His spine surgery and wrist fracture are documented. Testing for a possible brain injury is underway.',
@@ -300,12 +344,25 @@ const brooks = {
     { id: 'v-5', providerId: 'p-harbor', date: ago(18 * DAY), status: 'attended' },
   ],
   requests: [
-    { id: 'rq-1', providerId: 'p-harbor', title: 'Written agreement on the lien reduction', requestedAt: ago(6 * DAY) },
+    { id: 'rq-1', providerId: 'p-harbor', title: 'Written agreement on the lien reduction', requestedAt: ago(6 * DAY), dueAt: ago(2 * DAY) },
   ],
   documents: [
-    { id: 'd-1', title: 'Store incident report', pageCount: 2 },
-    { id: 'd-2', title: 'Right knee MRI', pageCount: 2 },
+    {
+      id: 'd-1', title: 'Store incident report', pageCount: 2,
+      pages: [
+        page(1, 'Customer fell in the produce aisle near the misting display.', 'Spill reported to front desk 25 minutes earlier.'),
+        page(2, 'Employee on duty: [[15]]', 'Cleanup crew not dispatched before the fall.'),
+      ],
+    },
+    {
+      id: 'd-2', title: 'Right knee MRI', pageCount: 2,
+      pages: [
+        page(1, 'Patient: Devon Brooks   MRN: [[9]]', 'Complex tear of the medial meniscus, posterior horn.'),
+        page(2, 'Small joint effusion. Ligaments intact.'),
+      ],
+    },
   ],
+  pausedReason: null,
   providerSummary: [
     'Devon tore the meniscus in his right knee in a fall at a grocery store.',
     'The case is in settlement talks with the store’s insurer.',
