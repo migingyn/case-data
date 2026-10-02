@@ -92,6 +92,14 @@ const expenseSchema = z.object({
 });
 export type ClioExpense = z.infer<typeof expenseSchema>;
 
+const relationshipSchema = z.object({
+  id: z.number(),
+  description: z.string().nullish(),
+  contact: z.object({ id: z.number(), name: z.string(), type: z.string() }).nullish(),
+  matter: matterRef.nullish(),
+});
+export type ClioRelationship = z.infer<typeof relationshipSchema>;
+
 async function fetchAll<T extends z.ZodType>(
   schema: T,
   apiPath: string,
@@ -138,4 +146,10 @@ export const listExpenses = () =>
   fetchAll(expenseSchema, '/activities.json', {
     type: 'ExpenseEntry',
     fields: 'id,total,non_billable_total,price,quantity,date,note,matter{id}',
+  });
+
+/** Contacts tied to a matter with a role, e.g. "Treating provider, physical therapy". */
+export const listRelationships = () =>
+  fetchAll(relationshipSchema, '/relationships.json', {
+    fields: 'id,description,contact{id,name,type},matter{id}',
   });

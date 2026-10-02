@@ -17,6 +17,7 @@ export const syncResultSchema = z.object({
   /** Rows written per table in this run. */
   counts: z.object({
     matters: z.number().int(),
+    providers: z.number().int(),
     clients: z.number().int(),
     documents: z.number().int(),
     entries: z.number().int(),

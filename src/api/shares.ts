@@ -151,10 +151,14 @@ export async function getMatterShares(matterId: string): Promise<Share[]> {
 }
 
 export async function getProviderUsers(providerId: string): Promise<ProviderUser[]> {
-  return z
+  const sampleUsers = z
     .array(providerUserSchema)
     .parse(sampleProviderUsers)
     .filter((user) => user.providerId === providerId);
+  if (sampleUsers.length > 0) return sampleUsers;
+  // Practices synced from Clio have no staff on record. One stand-in inbox
+  // receives the share until provider_users exist (they need sign-in).
+  return [providerUserSchema.parse({ id: `inbox-${providerId}`, providerId, name: 'Records desk', role: 'Practice inbox' })];
 }
 
 /** Keeps the settings only. The provider sees nothing new. */

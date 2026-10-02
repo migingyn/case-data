@@ -74,6 +74,9 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   `facts` sub-routes render `src/pages/ComingSoon/` until those screens exist
 - `src/components/SourceChip/` + `src/components/SourceDrawer/`: every cited
   fact gets a `SourceChip`; chips open the drawer via `SourceDrawerProvider`
+- Providers on a matter come from Clio matter relationships (see
+  `docs/schema.md`). Their share recipient is a stand-in "Records desk"
+  inbox from `getProviderUsers` until providers can sign in
 - `src/pages/Share/` (`/app/matters/:id/share`): share composer; shares are
   prototype server state in `src/api/shares.ts` (localStorage, so the provider
   tab sees publishes). `src/helpers/shares.ts` `buildProviderView` is the one

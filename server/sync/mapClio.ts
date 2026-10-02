@@ -6,6 +6,7 @@ import type {
   ClioExpense,
   ClioMatter,
   ClioNote,
+  ClioRelationship,
   ClioTask,
 } from '../clio/resources.ts';
 import { env } from '../env.ts';
@@ -197,5 +198,34 @@ export function fromExpense(expense: ClioExpense, clioMatterId: number): Sourced
     excerpt: `${description}: $${amount.toFixed(2)}`,
     entry: null,
     cost: { amount, incurredOn: expense.date.slice(0, 10), description },
+  };
+}
+
+/** Relationship roles that mean a treating medical provider. */
+const PROVIDER_ROLE = /^(treating provider[,:]?|medical provider[,:]?|treating|hospital)\s*/i;
+
+export interface ClioProvider {
+  clioContactId: number;
+  clioMatterId: number;
+  name: string;
+  specialty: string;
+}
+
+/**
+ * A matter relationship that names a treating provider, or null for anyone
+ * else on the matter (adverse parties, carriers, administrators).
+ */
+export function providerFromRelationship(rel: ClioRelationship): ClioProvider | null {
+  const description = rel.description?.trim() ?? '';
+  const role = PROVIDER_ROLE.exec(description);
+  if (!role || !rel.contact || !rel.matter) return null;
+  // "Hospital, emergency care" keeps "Hospital"; others drop the role prefix.
+  const rest = /^hospital/i.test(role[0]) ? 'Hospital' : description.slice(role[0].length);
+  const specialty = rest.split(/[(,]/)[0].trim();
+  return {
+    clioContactId: rel.contact.id,
+    clioMatterId: rel.matter.id,
+    name: rel.contact.name,
+    specialty: specialty ? specialty[0].toUpperCase() + specialty.slice(1) : 'Medical provider',
   };
 }

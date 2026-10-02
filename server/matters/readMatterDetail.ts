@@ -23,9 +23,9 @@ async function readBrief(db: ServiceClient, firmId: number, summaryId: number) {
 }
 
 /**
- * Header facts, KPIs, the cached brief and side panels for one matter, or
- * null if the firm has no such matter. Injuries and provider data stay empty
- * until there's a source for them.
+ * Header facts, KPIs, the cached brief, providers and side panels for one
+ * matter, or null if the firm has no such matter. Injuries, visits and
+ * requests stay empty until there's a source for them.
  */
 export async function readMatterDetail(
   db: ServiceClient,
@@ -43,7 +43,7 @@ export async function readMatterDetail(
   );
   if (!matter) return null;
 
-  const [client, valuation, policy, costs, contact, entryCount, summary] = await Promise.all([
+  const [client, valuation, policy, costs, contact, entryCount, summary, providers] = await Promise.all([
     db.from('clients').select('full_name').eq('id', matter.client_id).single(),
     db
       .from('valuations')
@@ -88,6 +88,12 @@ export async function readMatterDetail(
       .order('generated_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    db
+      .from('matter_providers')
+      .select('lien_type, provider:providers(id, name, specialty)')
+      .eq('firm_id', firmId)
+      .eq('matter_id', matterId)
+      .order('created_at'),
   ]);
   const clientRow = unwrap(client, 'client read');
   const valuationRow = unwrapMaybe(valuation, 'valuation read');
@@ -95,6 +101,7 @@ export async function readMatterDetail(
   const costRows = unwrap(costs, 'cost read');
   const contactRow = unwrapMaybe(contact, 'contact read');
   const summaryRow = unwrapMaybe(summary, 'summary read');
+  const providerRows = unwrap(providers, 'provider read');
   if (entryCount.error) throw new Error(`Supabase entry count failed: ${entryCount.error.message}`);
 
   const brief = summaryRow ? await readBrief(db, firmId, summaryRow.id) : { sentences: [], ranked: [] };
@@ -164,7 +171,21 @@ export async function readMatterDetail(
     })),
     totalEntries: entryCount.count ?? 0,
     injuries: [],
-    providers: [],
+    // Clio has no visit records, so last visit stays unknown.
+    providers: providerRows.flatMap((row) =>
+      row.provider
+        ? [
+            {
+              id: String(row.provider.id),
+              name: row.provider.name,
+              specialty: row.provider.specialty,
+              lienType: row.lien_type,
+              lastVisitAt: null,
+              lastVisitSource: null,
+            },
+          ]
+        : [],
+    ),
     milestones: [],
     visits: [],
     requests: [],
