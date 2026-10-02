@@ -21,16 +21,31 @@ interface CatchUpPanelProps {
   onDepthChange: (depth: CatchUpDepth) => void;
 }
 
+/** Renders the model's **bold** figures and a leading "Label:" category. */
+const BriefText: FC<{ text: string }> = ({ text }) => {
+  const colon = text.indexOf(': ');
+  const hasLabel = colon > 0 && colon <= 32 && !text.slice(0, colon).includes('**');
+  const body = hasLabel ? text.slice(colon + 2) : text;
+  return (
+    <>
+      {hasLabel && <span className="font-medium">{text.slice(0, colon)}: </span>}
+      {body.split(/\*\*(.+?)\*\*/g).map((part, i) =>
+        i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part,
+      )}
+    </>
+  );
+};
+
 const BriefBlock: FC<{ title: string; sentences: SourcedSentence[] }> = ({ title, sentences }) => (
   <div>
     <h3 className="text-[13px] font-medium text-muted-foreground">{title}</h3>
-    <p className="mt-1.5 text-sm leading-7">
+    <ul className="mt-1.5 flex list-disc flex-col gap-1.5 pl-5 text-sm leading-6 marker:text-muted-foreground">
       {sentences.map((sentence, i) => (
-        <span key={i}>
-          {sentence.text} <SourceChip source={sentence.source} />{' '}
-        </span>
+        <li key={i}>
+          <BriefText text={sentence.text} /> <SourceChip source={sentence.source} />
+        </li>
       ))}
-    </p>
+    </ul>
   </div>
 );
 
