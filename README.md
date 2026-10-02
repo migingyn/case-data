@@ -68,12 +68,66 @@ Liens are usually negotiated down at the end so the client takes home more.
  
 Sharing should be configurable per attorney.
 
-## 6. Tech Stack
+## 6. Our Approach
 
-Current brainstormed tech stack is:
+- **A dashboard, not a chatbot.** Open a matter and the catch-up brief, KPIs, recent changes and sources are already on screen.
+- **Cached AI digest.** The brief is written once, stored in Supabase, and only regenerated when the matter's records change or someone clicks Regenerate.
+- **Every fact is cited.** Each sentence in the brief and each figure carries a source chip that opens the original note, email, task or document.
+- **Provider-safe sharing.** Providers never read live firm data. A share is a frozen snapshot of what the firm chose to show, with version history and a "what changed" diff.
 
-Frontend: React + TypeScript
-│
-Backend: Express.js
-|
-Database:  Tanstack, Supabase
+## 7. Tech Stack
+
+| Layer | Choice |
+|-------|--------|
+| Frontend | Vite, React 19, TypeScript, react-router |
+| UI | Tailwind CSS v4, shadcn/ui (Radix), Geist and Geist Mono fonts |
+| Server state | TanStack Query, with zod schemas as the shared contract |
+| Backend | Express 5 (TypeScript, run by `tsx`). Only place Clio and OpenAI credentials live |
+| Database and auth | Supabase (Postgres, Auth, row level security) |
+| Source of truth | Clio Manage, connected over OAuth |
+| AI | OpenAI GPT-5.4 mini, called server-side with strict JSON output |
+| Tooling | oxlint, Supabase CLI |
+
+```
+Browser (React) ──/api──▶ Express ──▶ Clio Manage (OAuth, read-only)
+      │                      ├──────▶ OpenAI (catch-up briefs)
+      └── Supabase (RLS) ◀───┘ service-role writes
+```
+
+Why these choices: [ADR 0001](docs/adr/0001-tech-stack.md) (stack) and [ADR 0002](docs/adr/0002-llm-model.md) (LLM). Schema and who writes what: [docs/schema.md](docs/schema.md).
+
+## 8. What We've Built
+
+- **Clio connection.** OAuth connect and disconnect, with token refresh, from the Integrations page.
+- **Clio to Supabase sync.** Pulls open and pending matters, notes, emails and calls, tasks, documents, court dates, expenses and treating providers. Every record gets a citation, and re-running updates rows instead of duplicating them.
+- **Database schema with RLS.** Firm tenancy, sourced facts, and provider access limited to published snapshots.
+- **Dashboard.** "My matters" with stage, client and key dates, read from synced data.
+- **Matter view.** KPI strip, side panels for injuries and providers, source chips and a source drawer.
+- **Catch-up brief.** AI summary (where it stands, what is next, what to watch for) and the entries that matter, cached with an input hash and regeneratable.
+- **Share composer.** Choose what each provider sees, preview it, and publish.
+- **Provider portal.** A provider-facing case view built from frozen snapshots, sharing one component with the composer preview.
+- **Provider sync.** Providers are derived from Clio matter relationships.
+
+### Not built yet
+
+- Sign-in. API routes are localhost-only and unauthenticated, and the "Records desk" inbox stands in for provider users.
+- Shares still live in browser `localStorage`, not Supabase.
+- Valuations, policies, injuries, visits and requests have no Clio source, so those panels show empty states.
+- Document contents are not read, so there is no PDF injury extraction yet.
+- Records deleted in Clio are not removed from Supabase.
+- `record` and `facts` matter sub-routes are placeholders.
+- No test suite.
+
+## 9. Getting Started
+
+```bash
+npm install
+cp .env.example .env   # fill in Supabase, Clio and OpenAI credentials
+npm run dev            # web at http://127.0.0.1:5173, API at http://127.0.0.1:8787
+```
+
+Then open `/app/integrations` to connect Clio and run **Sync now**.
+
+Other commands: `npm run build` (typecheck and build), `npm run lint`, `npx supabase db push` (apply migrations).
+
+Use `127.0.0.1`, not `localhost`: Clio only accepts that redirect URI.
