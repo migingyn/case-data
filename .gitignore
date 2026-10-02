@@ -5,3 +5,12 @@
 data/
 
 .DS_Store
+
+# Node / Vite
+node_modules/
+dist/
+*.local
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea
