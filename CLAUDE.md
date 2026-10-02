@@ -44,8 +44,10 @@ Layering follows the `file-architecture` skill: components → `src/hooks/` →
   tab sees publishes). `src/helpers/shares.ts` `buildProviderView` is the one
   place that decides what a provider may see
 - `src/components/ProviderCaseView/` renders both the composer preview and the
-  provider page (`/provider/:providerId/matters/:matterId`, in `ProviderShell`),
-  so they cannot drift apart
+  provider portal page (`/provider/:providerId/matters/:matterId`, in
+  `ProviderShell`), so they cannot drift apart. Publishing freezes the built
+  `ProviderView` into the share's version history: providers only ever get
+  that snapshot, and "what changed" diffs consecutive snapshots
 - `src/lib/sessionStore.ts`: sessionStorage-backed client state (matters
   opened this session, catch-up depth) read with `useSessionValue`
 - `src/api/sample/`: fabricated sample data behind `src/api/matters.ts` until
